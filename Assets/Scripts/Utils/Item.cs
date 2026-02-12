@@ -25,7 +25,7 @@ public abstract class Item : MonoBehaviour
     }
 
     [Header("Physic Material Settings")]
-    public PhysicMaterial CustomPhysicMaterial;
+    public PhysicsMaterial CustomPhysicMaterial;
 
     public bool ChangeBallMaterial
     {
