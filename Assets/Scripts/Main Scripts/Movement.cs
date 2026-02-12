@@ -52,46 +52,46 @@ public class Movement : MonoBehaviour
         if(Player.instance.Lives < 0) return;
 
         // Launching mechanism
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (InputAdapter.PlungerPressedThisFrame())
             Plunger.instance.Retract();
 
-        if (Input.GetKey(KeyCode.Space))
+        if (InputAdapter.PlungerHeld())
             AccumulateForce();
 
-        if (Input.GetKeyUp(KeyCode.Space))
+        if (InputAdapter.PlungerReleasedThisFrame())
             ReleaseForce();
 
         if(Player.Tilt) return;
 
         // Right flipper
-        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+        if (InputAdapter.RightFlipperPressedThisFrame())
             RightFlipper.GetComponent<AudioSource>().Play();
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (InputAdapter.RightFlipperHeld())
             RightFlipper.motor = RotateFlipper(FlipperMotorVelocity, FlipperMotorForce);
 
-        if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.RightArrow))
+        if (InputAdapter.RightFlipperReleasedThisFrame())
             RightFlipper.motor = RotateFlipper(-FlipperMotorVelocity, FlipperMotorForce);
         
         // Left flipper
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+        if (InputAdapter.LeftFlipperPressedThisFrame())
             LeftFlipper.GetComponent<AudioSource>().Play();
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        if (InputAdapter.LeftFlipperHeld())
             LeftFlipper.motor = RotateFlipper(-FlipperMotorVelocity, FlipperMotorForce);
 
-        if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.LeftArrow))
+        if (InputAdapter.LeftFlipperReleasedThisFrame())
             LeftFlipper.motor = RotateFlipper(FlipperMotorVelocity, FlipperMotorForce);
 
         // Tilting activation/Shaking mechanism
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (InputAdapter.NudgeLeftPressedThisFrame())
             Boost(Vector3.left, ShakingForce);
 
-        if (Input.GetKeyDown(KeyCode.RightShift))
+        if (InputAdapter.NudgeRightPressedThisFrame())
             Boost(Vector3.right, ShakingForce);
 
         // Powerup
-        if (Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.LeftApple))
+        if (InputAdapter.UseItemPressedThisFrame())
             Inventory.UseItem();
     }
 

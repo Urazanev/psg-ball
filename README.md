@@ -54,3 +54,84 @@ Before submitting any changes, make sure to:
 - Run your build to check for any compilation/runtime errors;
 - Change the *"Game" scene*'s version *Text* component following the format: `1.MAJOR.MINOR.FIXES` (if it's not a fix you can omit the `.0`, such as `1.0.5` instead of `1.0.5.0`);
 - Check if the compression format (under *Project Settings > Player*) is listed as **Disabled**.
+
+## PSG1 Port (Stage 1)
+
+This repository now includes a PSG1 adaptation layer that preserves gameplay logic and only changes:
+- input integration (PlaySolana + Unity New Input System),
+- UI reference resolution for PSG1 screen,
+- Android build settings for PSG1 target.
+
+### Added packages
+
+- `com.playsolana.psdk` (from `https://github.com/playsolana/PlaySolana.Unity-SDK.git#main`)
+- `com.unity.inputsystem`
+
+`Project Settings > Player > Active Input Handling` is set to `Input System Package (New)` and Android backend is configured for `IL2CPP + ARM64`.
+
+### PSG1 input mapping
+
+Input actions are defined in:
+- `Assets/Resources/PSG1Controls.inputactions`
+
+Runtime adapter:
+- `Assets/Scripts/Main Scripts/InputAdapter.cs`
+
+| Game Action | PSG1/Gamepad binding | Notes |
+| --- | --- | --- |
+| LeftFlipper | `leftShoulder` (`L1`) | Equivalent to old `A/LeftArrow` behavior |
+| RightFlipper | `rightShoulder` (`R1`) | Equivalent to old `D/RightArrow` behavior |
+| Plunger | `buttonSouth` (`A`) | Hold/release semantics preserved (`Space` equivalent) |
+| Pause | `start` | Equivalent to `Esc` |
+| NudgeLeft | `dpad/left` | Equivalent to `LeftShift` |
+| NudgeRight | `dpad/right` | Equivalent to `RightShift` |
+| UseItem | `buttonWest` (`X`) | Equivalent to `LeftCtrl` |
+
+Unsupported PSG1 buttons are not used (`Volume +/-`, `Home`, `Fingerprint`, `R2/L2`).
+
+### PSG1 simulator workflow
+
+1. Open the project in Unity.
+2. Ensure package `Play Solana Unity SDK` is imported (via `Packages/manifest.json`).
+3. Open `Window > General > Device Simulator`.
+4. In Device Simulator, select the PSG1 device profile (`PSG1`, 1240x1080) from the device dropdown.
+5. Enter Play Mode and test controls with the simulator/gamepad bindings above.
+
+If `Device Simulator` window is unavailable, install Unity's Device Simulator package from Package Manager first.
+
+### Screen/UI target
+
+Canvas scaler in `Assets/Scenes/Game.unity` is configured with:
+- `Scale With Screen Size`
+- `Reference Resolution: 1240 x 1080`
+
+### Android build (manual via Unity)
+
+1. Open `File > Build Profiles` (or `Build Settings`) and select `Android`.
+2. Confirm:
+   - `Scripting Backend: IL2CPP`
+   - `Target Architectures: ARM64`
+3. Debug APK:
+   - Build with development options if needed.
+4. Signed release APK/AAB:
+   - Configure keystore in `Player Settings > Publishing Settings`.
+   - Build APK or AAB.
+
+### Android build (optional batch methods)
+
+Editor script:
+- `Assets/Editor/AndroidBuild.cs`
+
+Available methods:
+- `AndroidBuild.BuildDebugApk`
+- `AndroidBuild.BuildSignedReleaseApk`
+- `AndroidBuild.BuildSignedReleaseAab`
+
+For signed methods, set env vars before build:
+- `PSG1_KEYSTORE_PATH`
+- `PSG1_KEYSTORE_PASS`
+- `PSG1_KEY_ALIAS`
+- `PSG1_KEY_ALIAS_PASS`
+
+Detailed signing instructions:
+- `docs/ANDROID_SIGNING.md`

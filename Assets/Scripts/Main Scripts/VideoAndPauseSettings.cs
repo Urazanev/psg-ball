@@ -26,7 +26,7 @@ public class VideoAndPauseSettings : MonoBehaviour
 
     public void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Escape)) Pause();
+        if(InputAdapter.PausePressedThisFrame()) Pause();
     }
 
     public void Pause()
