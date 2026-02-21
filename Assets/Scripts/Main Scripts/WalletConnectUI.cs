@@ -319,7 +319,7 @@ public class WalletConnectUI : MonoBehaviour
         if (target == null || string.IsNullOrWhiteSpace(memberName)) return null;
 
         Type targetType = target as Type ?? target.GetType();
-        object instance = target as Type ? null : target;
+        object instance = target is Type ? null : target;
         return GetMemberValue(targetType, instance, memberName);
     }
 
