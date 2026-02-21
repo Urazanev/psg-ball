@@ -145,7 +145,7 @@ This project includes an in-game `Connect Wallet` button:
 ### Package dependency
 
 The manifest includes:
-- `com.solana.unity-sdk` from `https://github.com/magicblock-labs/Solana.Unity-SDK.git#v1.2.9`
+- `com.solana.unity_sdk` from `https://github.com/magicblock-labs/Solana.Unity-SDK.git#v1.2.9`
 
 If Unity cannot resolve this exact tag, update it to a current tag from the SDK repository.
 
