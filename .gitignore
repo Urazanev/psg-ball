@@ -65,3 +65,6 @@ crashlytics-build.properties
 
 # Local sound exploration/audit artifacts
 /audio-audit-2026-02-2*/
+
+# macOS Finder files
+.DS_Store
