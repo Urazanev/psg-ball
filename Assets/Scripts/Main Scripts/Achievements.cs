@@ -5,6 +5,11 @@ using System.Linq;
 
 public class Achievements : MonoBehaviour
 {
+    public static bool Enabled
+    {
+        get => false;
+    }
+
     // Same-scene "singleton" pattern for static access
     private static Achievements _instance;
     public static Achievements instance
@@ -169,6 +174,14 @@ public class Achievements : MonoBehaviour
     
     void Awake()
     {
+        if(!Enabled)
+        {
+            AchievementGUI achievementGUI = FindObjectOfType<AchievementGUI>(true);
+            if(achievementGUI != null)
+                achievementGUI.gameObject.SetActive(false);
+            return;
+        }
+
         // Loads all achievements from memory
         foreach(AchievementEnumeration achievementEnumeration in AllAchievements)
 
@@ -182,6 +195,8 @@ public class Achievements : MonoBehaviour
     #if UNITY_EDITOR
         public static void RemoveAchievement(Achievement achievement)
         {
+            if(!Enabled || achievement == null) return;
+
             achievement.Completed = false;
 
             // Clears the achievement in memory
@@ -193,6 +208,8 @@ public class Achievements : MonoBehaviour
     #endif
     public static void GiveAchievement(Achievement achievement)
     {
+        if(!Enabled || achievement == null) return;
+
         // User already has achievement
         if(achievement.Completed) return;
 

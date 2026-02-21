@@ -93,13 +93,21 @@ class AchievementGUI : MonoBehaviour
 
     Queue<Achievement> achievementQueue = new Queue<Achievement>();
 
-    #if UNITY_EDITOR
-        void Awake() => GiveAchievement = AchievementEnumeration.None;
-    #endif
+    void Awake()
+    {
+        #if UNITY_EDITOR
+            GiveAchievement = AchievementEnumeration.None;
+        #endif
+
+        if(!Achievements.Enabled)
+            gameObject.SetActive(false);
+    }
 
     #if UNITY_EDITOR
         void Update()
         {
+            if(!Achievements.Enabled) return;
+
             if(GiveAchievement != AchievementEnumeration.None)
             {
                 Achievements.GiveAchievement(Achievements.GetAchievementFromEnumeration(GiveAchievement));
@@ -133,6 +141,7 @@ class AchievementGUI : MonoBehaviour
 
     void PlayQueue()
     {
+        if(!Achievements.Enabled) return;
         if(achievementQueue.Count <= 0 || animationIsPlaying || _animationWaiting) return;
 
         Achievement _achievement = achievementQueue.Dequeue();
@@ -145,12 +154,14 @@ class AchievementGUI : MonoBehaviour
 
     public void AchievementGet(Achievement achievement)
     {
+        if(!Achievements.Enabled) return;
         achievementQueue.Enqueue(achievement);
         PlayQueue();
     }
 
     public void GetAchievementInfo(string _achievement)
     {
+        if(!Achievements.Enabled) return;
         if(!AchievementEnumeration.TryParse(_achievement, out AchievementEnumeration achievement)) return;
 
         Achievement achievementFound = Achievements.GetAchievementFromEnumeration(achievement);
@@ -161,6 +172,7 @@ class AchievementGUI : MonoBehaviour
 
     public void UpdateUI()
     {
+        if(!Achievements.Enabled) return;
         foreach(AchievementEnumeration achievementEnumeration in Achievements.AllAchievements)
         {
             Achievement achievement = Achievements.GetAchievementFromEnumeration(achievementEnumeration);

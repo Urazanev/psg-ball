@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ItemGUI : MonoBehaviour
 {
@@ -44,6 +45,9 @@ public class ItemGUI : MonoBehaviour
 
     [SerializeField]
     GameObject AchievementsPanel;
+
+    [SerializeField]
+    GameObject AchievementsLabel;
 
     [SerializeField]
     bool HideGoldenCrate = true;
@@ -144,6 +148,18 @@ public class ItemGUI : MonoBehaviour
 
         if(AchievementsPanel != null)
             AchievementsPanel.SetActive(false);
+
+        if(AchievementsLabel == null)
+        {
+            GameObject achievementsLabel = GameObject.Find("Achievements");
+            if(achievementsLabel != null &&
+                (achievementsLabel.GetComponent<TMP_Text>() != null ||
+                achievementsLabel.GetComponent<Text>() != null))
+                AchievementsLabel = achievementsLabel;
+        }
+
+        if(AchievementsLabel != null)
+            AchievementsLabel.SetActive(false);
 
         if(HideGoldenCrate && GoldenCrate != null)
             GoldenCrate.gameObject.SetActive(false);

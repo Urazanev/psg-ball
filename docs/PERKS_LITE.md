@@ -46,9 +46,17 @@ These still exist in project code/assets, but are excluded from crate loot in Li
 `Assets/Scripts/Main Scripts/ItemGUI.cs` now has:
 - `UseSimplifiedMenu` (default: true)
 - hides `Achievements Panel`
+- hides `Achievements` label
 - hides `Golden Crate` button
 
 This removes early UI noise while preserving systems in code.
+
+## Achievements Policy (current build)
+- Achievements are fully disabled for players:
+  - no unlock processing in gameplay loop,
+  - no achievement popups,
+  - no achievements section in menu.
+- This is implemented without deleting the original achievement code, so it can be re-enabled later.
 
 ## Why this cut works
 - Keeps only understandable, mostly positive effects.

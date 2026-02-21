@@ -69,18 +69,10 @@ public static class Inventory
             return;
         }
 
-        // Achievements
-        Achievements.GiveAchievement(Achievements.GamblingNewbie);
-        if(rarity == Crates.Golden)
-        {
-            Achievements.GiveAchievement(Achievements.GamblingExpert);
-            if(++goldenCount >= 3)
-            {
-                Achievements.GiveAchievement(Achievements.GamblingTycoon);
-                goldenCount = 0;
-            }
-        }
-        else goldenCount = 0;
+        // Achievement progression is disabled in the simplified product flow.
+        if(rarity == Crates.Golden && ++goldenCount >= 3)
+            goldenCount = 0;
+        else if(rarity != Crates.Golden) goldenCount = 0;
 
         // Subtracts the price from the ticket count
         #if UNITY_EDITOR
@@ -179,12 +171,6 @@ public static class Inventory
     {
         SetMemory();
         ItemGUI.instance.LoadItems();
-
-        // Checks for achievements
-        if(Slots[0] == Slots[1] && Slots[1] == Slots[2])
-            if(Slots[0] == Items.CurseOfAnubis && Achievements.Jackpot.Completed) Achievements.GiveAchievement(Achievements.OneOfAKind);
-            else if(Slots[0] == Items.HealthBonus && Achievements.Jackpot.Completed) Achievements.GiveAchievement(Achievements.StraightFlush);
-            else if(Slots[0] != Items.NoItem) Achievements.GiveAchievement(Achievements.Jackpot);
     }
 
     struct ItemIncidence
