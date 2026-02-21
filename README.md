@@ -135,3 +135,24 @@ For signed methods, set env vars before build:
 
 Detailed signing instructions:
 - `docs/ANDROID_SIGNING.md`
+
+## Wallet Connect (no transactions)
+
+This project includes an in-game `Connect Wallet` button:
+- script: `Assets/Scripts/Main Scripts/WalletConnectUI.cs`
+- behavior: attempts wallet login via Solana Unity SDK, no transaction flow is included.
+
+### Package dependency
+
+The manifest includes:
+- `com.solana.unity-sdk` from `https://github.com/magicblock-labs/Solana.Unity-SDK.git#v1.0.0-preview.31`
+
+If Unity cannot resolve this exact tag, update it to a current tag from the SDK repository.
+
+### How to test
+
+1. Open project and let Unity resolve packages.
+2. Open the game scene and enter Play Mode.
+3. Press `Connect Wallet` (top-right overlay panel).
+4. Approve connection in wallet adapter flow.
+5. Check the status label changes from `Wallet: not connected` to a shortened wallet address.
