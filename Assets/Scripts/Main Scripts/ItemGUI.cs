@@ -38,6 +38,16 @@ public class ItemGUI : MonoBehaviour
     [SerializeField]
     Button GoldenCrate;
 
+    [Header("Simplified Menu")]
+    [SerializeField]
+    bool UseSimplifiedMenu = true;
+
+    [SerializeField]
+    GameObject AchievementsPanel;
+
+    [SerializeField]
+    bool HideGoldenCrate = true;
+
     [Header("Powerup Slots")]
     [SerializeField]
     List<Image> FirstItem;
@@ -57,6 +67,8 @@ public class ItemGUI : MonoBehaviour
         RustyCrate.onClick.AddListener(() => Inventory.PurchaseItem(3, Crates.Rusty));
         BrassCrate.onClick.AddListener(() => Inventory.PurchaseItem(6, Crates.Brass));
         GoldenCrate.onClick.AddListener(() => Inventory.PurchaseItem(10, Crates.Golden));
+
+        ConfigureSimplifiedMenu();
     }
 
     #if UNITY_EDITOR
@@ -117,5 +129,23 @@ public class ItemGUI : MonoBehaviour
             i.gameObject.SetActive(true);
             i.sprite = item.Icon;
         }
+    }
+
+    void ConfigureSimplifiedMenu()
+    {
+        if(!UseSimplifiedMenu) return;
+
+        if(AchievementsPanel == null)
+        {
+            GameObject achievementsPanel = GameObject.Find("Achievements Panel");
+            if(achievementsPanel != null)
+                AchievementsPanel = achievementsPanel;
+        }
+
+        if(AchievementsPanel != null)
+            AchievementsPanel.SetActive(false);
+
+        if(HideGoldenCrate && GoldenCrate != null)
+            GoldenCrate.gameObject.SetActive(false);
     }
 }

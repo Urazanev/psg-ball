@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 public static class Inventory
 {
+    // Keep this true while we iterate on a simpler product build.
+    // It only narrows crate drop tables and does not remove item scripts/mechanics.
+    private const bool UsePerksLiteLootTables = true;
+
     public static Item[] Slots = new Item[3] { Items.NoItem, Items.NoItem, Items.NoItem };
     public static Item Equipped = Items.NoItem;
     public static Item NextItem
@@ -194,46 +198,87 @@ public static class Inventory
     {
         List<ItemIncidence> lootTable = new List<ItemIncidence>();
 
-        // Which lootTable to use
-        switch(rarity)
+        if(UsePerksLiteLootTables)
         {
-            case Crates.Rusty:
-                lootTable = new List<ItemIncidence>()
-                {
-                    new ItemIncidence(){ item = Items.Fireball, incidence = 4 },
-                    new ItemIncidence(){ item = Items.WaterDroplet, incidence = 4 },
-                    new ItemIncidence(){ item = Items.CameraFlip, incidence = 3 },
-                    new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                    new ItemIncidence(){ item = Items.PingPong, incidence = 3 },
-                    new ItemIncidence(){ item = Items.Rock, incidence = 4 },
-                    new ItemIncidence(){ item = Items.TennisBall, incidence = 1 },
-                };
-                break;
-            case Crates.Brass:
-                lootTable = new List<ItemIncidence>()
-                {
-                    new ItemIncidence(){ item = Items.Fireball, incidence = 2 },
-                    new ItemIncidence(){ item = Items.WaterDroplet, incidence = 1 },
-                    new ItemIncidence(){ item = Items.LuckyCharm, incidence = 4 },
-                    new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
-                    new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                    new ItemIncidence(){ item = Items.CameraFlip, incidence = 1 },
-                    new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
-                    new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                    new ItemIncidence(){ item = Items.TennisBall, incidence = 2 },
-                    new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
-                };
-                break;
-            case Crates.Golden:
-                lootTable = new List<ItemIncidence>()
-                {
-                    new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
-                    new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                    new ItemIncidence(){ item = Items.ExtraBall, incidence = 2 },
-                    new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                    new ItemIncidence(){ item = Items.TicketPrize, incidence = 1 }
-                };
-                break;
+            switch(rarity)
+            {
+                case Crates.Rusty:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 4 },
+                        new ItemIncidence(){ item = Items.PingPong, incidence = 4 },
+                        new ItemIncidence(){ item = Items.TennisBall, incidence = 3 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
+                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 1 },
+                    };
+                    break;
+                case Crates.Brass:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 2 },
+                        new ItemIncidence(){ item = Items.PingPong, incidence = 2 },
+                        new ItemIncidence(){ item = Items.TennisBall, incidence = 2 },
+                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
+                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
+                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
+                    };
+                    break;
+                case Crates.Golden:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
+                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
+                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
+                    };
+                    break;
+            }
+        }
+        else
+        {
+
+            // Which lootTable to use
+            switch(rarity)
+            {
+                case Crates.Rusty:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.Fireball, incidence = 4 },
+                        new ItemIncidence(){ item = Items.WaterDroplet, incidence = 4 },
+                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 3 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
+                        new ItemIncidence(){ item = Items.PingPong, incidence = 3 },
+                        new ItemIncidence(){ item = Items.Rock, incidence = 4 },
+                        new ItemIncidence(){ item = Items.TennisBall, incidence = 1 },
+                    };
+                    break;
+                case Crates.Brass:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.Fireball, incidence = 2 },
+                        new ItemIncidence(){ item = Items.WaterDroplet, incidence = 1 },
+                        new ItemIncidence(){ item = Items.LuckyCharm, incidence = 4 },
+                        new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
+                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
+                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 1 },
+                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
+                        new ItemIncidence(){ item = Items.TennisBall, incidence = 2 },
+                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
+                    };
+                    break;
+                case Crates.Golden:
+                    lootTable = new List<ItemIncidence>()
+                    {
+                        new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
+                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
+                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 2 },
+                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
+                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 1 }
+                    };
+                    break;
+            }
         }
 
         // Return Item from incidence
