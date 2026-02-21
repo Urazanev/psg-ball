@@ -10,6 +10,16 @@
       },
       "hash": "d42fcd5b038ff12ded039ad6c21c26926bc6853b"
     },
+    "com.solana.unity_sdk": {
+      "version": "https://github.com/magicblock-labs/Solana.Unity-SDK.git#v1.2.9",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2",
+        "com.unity.textmeshpro": "3.0.6"
+      },
+      "hash": "3d139411ef2b0b0cad451dd97e63c609fad63ea0"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.10",
       "depth": 0,

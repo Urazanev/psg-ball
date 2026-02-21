@@ -17,6 +17,7 @@ public class WalletConnectUI : MonoBehaviour
     TMP_Text buttonLabel;
     TMP_Text statusLabel;
     bool isConnecting;
+    string editorMockAddress;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
@@ -148,12 +149,15 @@ public class WalletConnectUI : MonoBehaviour
 
             string address = TryReadConnectedAddress();
             bool hasAddress = !string.IsNullOrWhiteSpace(address);
-            SetStatus(hasAddress ? $"Wallet: {ShortAddress(address)}" : "Wallet: connected");
+            bool mockSession = !IsWalletAdapterSupportedRuntime() && !string.IsNullOrWhiteSpace(editorMockAddress);
+            SetStatus(hasAddress
+                ? $"Wallet: {ShortAddress(address)}{(mockSession ? " (mock)" : string.Empty)}"
+                : "Wallet: connected");
             SetButtonText(hasAddress ? "Connected" : "Reconnect Wallet");
         }
         catch (Exception exception)
         {
-            Debug.LogError($"WalletConnectUI: Wallet connect failed: {exception.Message}");
+            Debug.LogError($"WalletConnectUI: Wallet connect failed: {exception}");
             SetStatus("Wallet: connect failed");
         }
         finally
@@ -165,6 +169,20 @@ public class WalletConnectUI : MonoBehaviour
 
     async Task<bool> TryConnectWallet()
     {
+        if (!IsWalletAdapterSupportedRuntime())
+        {
+            #if UNITY_EDITOR
+            editorMockAddress ??= BuildEditorMockAddress();
+            SetStatus($"Wallet: {ShortAddress(editorMockAddress)} (mock)");
+            Debug.Log("WalletConnectUI: Editor mock wallet connected.");
+            return true;
+            #else
+            SetStatus("Wallet: run on PSG1 Android build");
+            Debug.LogWarning("WalletConnectUI: Wallet adapter login is only available on device runtime (Android/PSG1).");
+            return false;
+            #endif
+        }
+
         Type web3Type = ResolveWeb3Type();
         if (web3Type == null)
         {
@@ -195,9 +213,26 @@ public class WalletConnectUI : MonoBehaviour
             return false;
         }
 
-        object invocationResult = loginMethod.Invoke(web3Instance, null);
+        object invocationResult;
+        try
+        {
+            invocationResult = loginMethod.Invoke(web3Instance, null);
+        }
+        catch (TargetInvocationException tie) when (tie.InnerException != null)
+        {
+            throw tie.InnerException;
+        }
+
         await AwaitUnknownAsyncResult(invocationResult);
         return true;
+    }
+
+    static bool IsWalletAdapterSupportedRuntime()
+    {
+        RuntimePlatform platform = Application.platform;
+        return platform == RuntimePlatform.Android ||
+               platform == RuntimePlatform.WebGLPlayer ||
+               platform == RuntimePlatform.IPhonePlayer;
     }
 
     static Task AwaitUnknownAsyncResult(object asyncResult)
@@ -222,6 +257,9 @@ public class WalletConnectUI : MonoBehaviour
 
     string TryReadConnectedAddress()
     {
+        if (!string.IsNullOrWhiteSpace(editorMockAddress))
+            return editorMockAddress;
+
         Type web3Type = ResolveWeb3Type();
         if (web3Type == null) return null;
 
@@ -244,6 +282,8 @@ public class WalletConnectUI : MonoBehaviour
 
         return null;
     }
+
+    static string BuildEditorMockAddress() => "Ed1torMock11111111111111111111111111111111111";
 
     static string ExtractAddress(object candidate)
     {
@@ -287,7 +327,11 @@ public class WalletConnectUI : MonoBehaviour
     static object GetWeb3Instance(Type web3Type)
     {
         object instance = GetMemberValue(web3Type, null, "Instance");
-        if (instance != null) return instance;
+        if (instance != null)
+        {
+            EnsureWeb3Options(instance);
+            return instance;
+        }
 
         if (!typeof(Component).IsAssignableFrom(web3Type)) return null;
 
@@ -299,7 +343,48 @@ public class WalletConnectUI : MonoBehaviour
         }
 
         Component component = host.GetComponent(web3Type) ?? host.AddComponent(web3Type);
-        return GetMemberValue(web3Type, null, "Instance") ?? component;
+        object web3Instance = GetMemberValue(web3Type, null, "Instance") ?? component;
+        EnsureWeb3Options(web3Instance);
+        return web3Instance;
+    }
+
+    static void EnsureWeb3Options(object web3Instance)
+    {
+        if (web3Instance == null) return;
+
+        object walletAdapterOptions = EnsureMemberInitialized(web3Instance, "solanaWalletAdapterOptions");
+        if (walletAdapterOptions == null) return;
+
+        EnsureMemberInitialized(walletAdapterOptions, "solanaMobileWalletAdapterOptions");
+        EnsureMemberInitialized(walletAdapterOptions, "solanaWalletAdapterWebGLOptions");
+        EnsureMemberInitialized(walletAdapterOptions, "phantomWalletOptions");
+    }
+
+    static object EnsureMemberInitialized(object target, string memberName)
+    {
+        if (target == null || string.IsNullOrWhiteSpace(memberName)) return null;
+
+        Type type = target.GetType();
+        FieldInfo field = type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+        if (field != null)
+        {
+            object current = field.GetValue(target);
+            if (current != null) return current;
+
+            object created = Activator.CreateInstance(field.FieldType);
+            field.SetValue(target, created);
+            return created;
+        }
+
+        PropertyInfo property = type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+        if (property == null || !property.CanRead || !property.CanWrite) return null;
+
+        object value = property.GetValue(target);
+        if (value != null) return value;
+
+        object initialized = Activator.CreateInstance(property.PropertyType);
+        property.SetValue(target, initialized);
+        return initialized;
     }
 
     static MethodInfo FindMethod(Type type, IReadOnlyList<string> names)

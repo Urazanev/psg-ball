@@ -156,3 +156,5 @@ If Unity cannot resolve this exact tag, update it to a current tag from the SDK 
 3. Press `Connect Wallet` (top-right overlay panel).
 4. Approve connection in wallet adapter flow.
 5. Check the status label changes from `Wallet: not connected` to a shortened wallet address.
+
+Note: wallet adapter connection is available on runtime targets (PSG1/Android build). In Unity Editor play mode, the button uses a mock wallet session for UI testing.
