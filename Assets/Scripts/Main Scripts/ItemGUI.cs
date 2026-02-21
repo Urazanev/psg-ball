@@ -151,11 +151,28 @@ public class ItemGUI : MonoBehaviour
 
         if(AchievementsLabel == null)
         {
-            GameObject achievementsLabel = GameObject.Find("Achievements");
-            if(achievementsLabel != null &&
-                (achievementsLabel.GetComponent<TMP_Text>() != null ||
-                achievementsLabel.GetComponent<Text>() != null))
-                AchievementsLabel = achievementsLabel;
+            TMP_Text[] tmpLabels = Object.FindObjectsOfType<TMP_Text>(true);
+            foreach(TMP_Text label in tmpLabels)
+            {
+                if(label != null && label.text == "Achievements")
+                {
+                    AchievementsLabel = label.gameObject;
+                    break;
+                }
+            }
+
+            if(AchievementsLabel == null)
+            {
+                Text[] legacyLabels = Object.FindObjectsOfType<Text>(true);
+                foreach(Text label in legacyLabels)
+                {
+                    if(label != null && label.text == "Achievements")
+                    {
+                        AchievementsLabel = label.gameObject;
+                        break;
+                    }
+                }
+            }
         }
 
         if(AchievementsLabel != null)
