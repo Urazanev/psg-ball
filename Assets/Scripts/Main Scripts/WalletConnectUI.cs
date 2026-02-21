@@ -16,6 +16,7 @@ public class WalletConnectUI : MonoBehaviour
     Button connectButton;
     TMP_Text buttonLabel;
     TMP_Text statusLabel;
+    GameObject walletRoot;
     bool isConnecting;
     string editorMockAddress;
 
@@ -32,6 +33,12 @@ public class WalletConnectUI : MonoBehaviour
     {
         BuildOrFindWidget();
         RefreshConnectionStatus();
+        UpdateMainMenuVisibility();
+    }
+
+    void Update()
+    {
+        UpdateMainMenuVisibility();
     }
 
     void BuildOrFindWidget()
@@ -45,6 +52,7 @@ public class WalletConnectUI : MonoBehaviour
 
         Transform existingRoot = canvas.transform.Find(RootObjectName);
         GameObject rootObject = existingRoot != null ? existingRoot.gameObject : CreateRoot(canvas.transform);
+        walletRoot = rootObject;
 
         Transform buttonTransform = rootObject.transform.Find(ButtonObjectName);
         if (buttonTransform == null)
@@ -60,6 +68,16 @@ public class WalletConnectUI : MonoBehaviour
             statusTransform = CreateStatus(rootObject.transform).transform;
 
         statusLabel = statusTransform.GetComponent<TMP_Text>();
+    }
+
+    void UpdateMainMenuVisibility()
+    {
+        if (walletRoot == null) return;
+
+        PlayerGUI playerGUI = PlayerGUI.instance;
+        bool shouldBeVisible = playerGUI != null && playerGUI.IsMainMenuVisible;
+        if (walletRoot.activeSelf != shouldBeVisible)
+            walletRoot.SetActive(shouldBeVisible);
     }
 
     GameObject CreateRoot(Transform parent)

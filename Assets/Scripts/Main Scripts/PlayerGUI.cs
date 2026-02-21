@@ -43,6 +43,11 @@ public class PlayerGUI : MonoBehaviour
     [SerializeField]
     GameObject GameOverPanel;
 
+    public bool IsMainMenuVisible
+    {
+        get => PlayPanel != null && PlayPanel.activeSelf;
+    }
+
     [Header("Panel Labels")]
     [SerializeField]
     TMP_Text GameOverLabel;
