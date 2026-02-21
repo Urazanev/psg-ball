@@ -41,7 +41,7 @@ public class Field : MonoBehaviour
         get
         {
             foreach(Rigidbody ball in BallsInField)
-                if(ball.velocity.magnitude > 0.1)
+                if(ball.linearVelocity.magnitude > 0.1)
                     return false;
             
             return true;

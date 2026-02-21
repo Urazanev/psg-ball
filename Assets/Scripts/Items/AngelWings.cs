@@ -10,7 +10,7 @@ public class AngelWings : Item
         {
             // Resets speed
             ball.angularVelocity = Vector3.zero;
-            ball.velocity = Vector3.zero;
+            ball.linearVelocity = Vector3.zero;
 
             // Teleports balls to spawnpoint
             ball.transform.position = Field.instance.Spawnpoint.position;
