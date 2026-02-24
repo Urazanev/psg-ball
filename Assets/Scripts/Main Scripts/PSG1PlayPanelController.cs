@@ -114,7 +114,7 @@ public class PSG1PlayPanelController : MonoBehaviour
 
     [Header("Temporary Utility Buttons")]
     [SerializeField]
-    bool showTemporaryUtilityButtons = false;
+    bool showTemporaryUtilityButtons = true;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
