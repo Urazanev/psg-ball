@@ -66,7 +66,7 @@ Multiplier reset:
 This happens:
 - on game start (`Lives = 4`),
 - on ball death (`Lives -= 1`),
-- on any effect that adds/changes lives (for example `Health Bonus`, `Curse of Anubis`).
+- on any effect that adds/changes lives (for example `Health Bonus`).
 
 ## 6) Table nudge and Tilt
 
@@ -94,37 +94,49 @@ Behavior:
 - if force crosses `MaxForce`, fail sound plays and force is reduced by a random factor around `0.5..0.7`;
 - on `Space` release, accumulated force is applied forward to balls inside the plunger zone.
 
-## 8) Tickets and economy
+## 8) Balls and economy
 
-### 8.1 How tickets are earned
+### 8.1 How balls are earned
 
 A threshold logic based on score and multiplier:
 
 ```text
 If Score > lastTicketIncrement + (500 * Multiplier)
-=> Tickets += 1
+=> Balls += 1
 => lastTicketIncrement += 500 * Multiplier
 ```
 
 Details:
 - strict check (`>`), not `>=`;
-- max 1 ticket per score update;
-- tickets are persisted between sessions (`PlayerPrefs` key `ticketCount`).
+- max 1 ball per score update;
+- balls are persisted between sessions (`PlayerPrefs` key `ticketCount`, legacy key name).
 
-### 8.2 Crate shop
+### 8.2 Daily claim (wallet-linked)
 
-Prices:
-- Rusty Crate: `3` tickets
-- Brass Crate: `6` tickets
-- Golden Crate: `10` tickets
+- Daily reward amount: `+10` balls.
+- Claim is available once per UTC day.
+- Claim is stored per connected wallet address (separate key per wallet).
+- If wallet is not connected, button shows `CONNECT FOR DAILY`.
+- After claim, button shows `CLAIMED TODAY` until the next UTC day.
+
+### 8.3 Capsule shop (PSG1 flow)
+
+Current shop has exactly 2 capsule types:
+- Basic Capsule: `3` balls.
+- Premium Capsule: `7` balls.
+
+Technical note:
+- Internally these still map to legacy crate enums (`Rusty` and `Brass`), but in gameplay/UI they are capsules.
 
 Purchase fails if:
-- not enough tickets;
+- not enough balls;
 - all 3 inventory slots are occupied.
 
-On failed purchase, tickets are not spent.
+On failed purchase, balls are not spent.
 
-## 9) Inventory and item activation
+There is no Golden capsule in the current PSG1 shop flow.
+
+## 9) Inventory and perk activation
 
 - Inventory: 3 slots (queue).
 - Always uses the **first** slot.
@@ -132,10 +144,10 @@ On failed purchase, tickets are not spent.
 
 Usage limits:
 - at least 1 ball must be on the field;
-- cannot activate a new item while previous one is still equipped.
+- cannot activate a new perk while a previous perk is still equipped.
 
 Effect duration:
-- item stays active until next ball loss (when `Inventory.Unequip()` is called).
+- equipped perk stays active until next ball loss (when `Inventory.Unequip()` is called).
 
 Applied to balls:
 - at activation time, all current balls may receive:
@@ -143,204 +155,72 @@ Applied to balls:
   - ball visual material,
   - ball physics material.
 
-## 10) Crate loot: exact odds
+## 10) Capsule loot: exact odds
 
-### 10.1 Rusty Crate (total incidence = 20)
+### 10.1 Basic Capsule (`3` balls, total weight = `100`)
 
-- Fireball: `4/20 = 20%`
-- Water Droplet: `4/20 = 20%`
-- Camera Flip: `3/20 = 15%`
-- Health Bonus: `1/20 = 5%`
-- Ping Pong: `3/20 = 15%`
-- Rock: `4/20 = 20%`
-- Tennis Ball: `1/20 = 5%`
+- Ball Prize (`TicketPrize`): `40%`
+- Ping Pong: `35%`
+- Health Bonus: `25%`
 
-### 10.2 Brass Crate (total incidence = 20)
+### 10.2 Premium Capsule (`7` balls, total weight = `100`)
 
-- Fireball: `10%`
-- Water Droplet: `5%`
-- Lucky Charm: `20%`
-- Curse of Anubis: `5%`
-- Angel Wings: `10%`
-- Camera Flip: `5%`
-- Extra Ball: `15%`
-- Health Bonus: `5%`
-- Tennis Ball: `10%`
-- Ticket Prize: `15%`
+- Angel Wings: `40%`
+- Extra Ball: `35%`
+- Health Bonus: `25%`
 
-### 10.3 Golden Crate (total incidence = 7)
+Note:
+- The Premium card text may call this `Elite Health`; runtime drop is still `Health Bonus`.
 
-- Curse of Anubis: `1/7 ≈ 14.29%`
-- Angel Wings: `2/7 ≈ 28.57%`
-- Extra Ball: `2/7 ≈ 28.57%`
-- Health Bonus: `1/7 ≈ 14.29%`
-- Ticket Prize: `1/7 ≈ 14.29%`
+## 11) All obtainable perks: actual behavior
 
-## 11) All items: actual behavior
+Below is the behavior that really exists in code for perks obtainable in the current PSG1 capsule shop.
 
-Below is the behavior that really exists in code.
-
-### 11.1 Fireball
-
-- OnEquip: no additional logic.
-- Passive via materials:
-  - changes visuals;
-  - applies `Fireball` physics material (`bounciness: 0.8`, `bounceCombine: Max`).
-
-### 11.2 Water Droplet
-
-- OnEquip: no additional logic.
-- Passive via materials:
-  - changes visuals;
-  - applies `WaterDroplet` physics material (`bounciness: 0.5`, `bounceCombine: Average`).
-
-### 11.3 Lucky Charm
-
-- OnEquip: no additional logic.
-- On every ball `OnCollisionExit`:
-  - `Multiplier = Random.Range(0.01f, 3.6f)`.
-- Effect is highly unstable: multiplier can sharply rise or drop.
-
-### 11.4 Curse of Anubis
-
-- On activation:
-  - `Lives = 0` (resets multiplier to `1.0`),
-  - `Score /= 2`,
-  - `Multiplier += 2.5` (usually becomes `3.5` right after activation),
-  - main light intensity drops to `0.25`.
-- On unequip:
-  - light intensity returns to `0.8`.
-- Also changes physics material/visuals/trail.
-
-### 11.5 Angel Wings
-
-- On activation, for each ball:
-  - clears velocity and angular velocity,
-  - teleports ball to spawnpoint.
-- Useful for recovering from bad ball position.
-
-### 11.6 Camera Flip
-
-- On activation:
-  - camera flips (`z = 180`),
-  - `Multiplier += 1.5`.
-- On unequip:
-  - camera returns to normal angle.
-
-### 11.7 Extra Ball
-
-- On activation: spawns an additional ball.
-- Important effect: life is removed only when **no** balls remain on the field, so multi-ball increases survivability.
-
-### 11.8 Health Bonus
-
-- On activation: `Lives += 1`.
-- On each score event (`OnScoring`):
-  - `1/50` chance (2%) to grant another `+1` life.
-- Important nuance: any `Lives` change resets multiplier to `1.0`.
-
-### 11.9 Ping Pong
+### 11.1 Ping Pong
 
 - On activation, boosts flippers:
   - `FlipperMotorVelocity: 1500 -> 2500`
   - `FlipperMotorForce: 150 -> 250`
 - On unequip, restores default values.
 
-### 11.10 Rock
+### 11.2 Health Bonus
 
-- OnEquip: no extra logic.
-- Passive via `Rock` physics material:
-  - `bounciness: 0`,
-  - ball feels "heavier" on rebounds.
+- On activation: `Lives += 1`.
+- On each score event (`OnScoring`):
+  - `1/50` chance (2%) to grant another `+1` life.
+- Any `Lives` change resets multiplier to `1.0`.
 
-### 11.11 Tennis Ball
+### 11.3 Ball Prize (`TicketPrize` item)
 
-- On activation:
-  - `TiltChance: 5 -> 20`.
-- This means nudge Tilt chance changes from `20%` to `5%`.
-- Also changes physics material/visuals.
-
-### 11.12 Ticket Prize
-
-- On activation: instantly grants `Random.Range(3, 6)` => `3..5` tickets.
+- On activation: instantly grants `Random.Range(3, 6)` => `3..5` balls.
 - On each score event:
-  - `1/10` chance (10%) to grant `+1` ticket.
+  - `1/10` chance (10%) to grant `+1` ball.
 
-## 12) Achievements
+### 11.4 Angel Wings
 
-## 12.1 What is important to understand
+- On activation, for each ball:
+  - clears velocity and angular velocity,
+  - teleports ball to spawnpoint.
+- Useful for recovering from bad ball position.
 
-- Each achievement has `Constraints` (prerequisites).
-- If prerequisites are not met, achievement will not unlock even if the "main" condition is completed.
-- Achievement icons in UI are often hidden until achievement becomes unlockable.
+### 11.5 Extra Ball
 
-### 12.2 Achievement list, conditions and dependencies
+- On activation: spawns an additional ball.
+- Life is removed only when **no** balls remain on the field, so multiball increases survivability.
 
-1. `Getting Started` (Common)
-- Condition: start the first game.
-- Prerequisites: none.
+Legacy note:
+- Other historical perks still exist in codebase, but are filtered out from PSG1 shop drops and sanitized from saved inventory.
 
-2. `Ticket Apprentice` (Common)
-- Condition: get the first ticket.
-- Prerequisites: `Getting Started`.
+## 12) Achievements (current PSG1 build)
 
-3. `Ticket Master` (Common)
-- Condition: have 10 tickets.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`.
-
-4. `Ticket Hoarder` (Rare)
-- Condition: have 100 tickets.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Ticket Master`.
-
-5. `Ticket Maniac` (Legendary)
-- Condition: have 1000 tickets.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Ticket Master`, `Ticket Hoarder`.
-
-6. `Gambling Newbie` (Common)
-- Condition: buy the first crate.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`.
-
-7. `Gambling Expert` (Common)
-- Condition: buy the first Golden Crate.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`.
-
-8. `Gambling Tycoon` (Common)
-- Condition: buy 3 Golden Crates in a row (streak resets if a non-golden crate is bought).
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`, `Gambling Expert`.
-
-9. `Survivalist` (Common)
-- Condition: reach multiplier `x3`.
-- Prerequisites: `Getting Started`.
-
-10. `Ninja` (Rare)
-- Condition: reach multiplier `x5`.
-- Prerequisites: `Getting Started`, `Survivalist`.
-
-11. `Jackpot` (Common)
-- Condition: 3 identical items in inventory slots (not `NoItem`).
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`.
-
-12. `One of a Kind` (Rare)
-- Condition: 3x `Curse of Anubis` in slots.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`, `Jackpot`.
-
-13. `Straight Flush` (Rare)
-- Condition: 3x `Health Bonus` in slots.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`, `Jackpot`.
-
-14. `Pinball Wizard` (Legendary)
-- Condition: reach `500000` score in one game.
-- Prerequisites: `Getting Started`, `Ticket Apprentice`, `Gambling Newbie`, `Jackpot`, `Survivalist`, `Ninja`.
-
-### 12.3 Achievement unlock nuances
-
-- `One of a Kind` and `Straight Flush` in code require `Jackpot` to already be unlocked.
-- If you first assemble three identical "special" items, often only `Jackpot` is granted first, and the special achievement must be repeated.
+- Runtime achievement progression is disabled (`Achievements.Enabled == false`).
+- Achievement UI is hidden in this build.
+- Legacy achievement classes/prefabs still exist in the project, but they do not unlock during normal gameplay.
 
 ## 13) Progress persistence
 
 Saved in `PlayerPrefs`:
-- tickets (`ticketCount`),
+- balls (`ticketCount`, legacy key name),
 - contents of 3 slots (`Item0`, `Item1`, `Item2`),
 - achievement state (keys by achievement names).
 
@@ -352,13 +232,11 @@ Not persisted between restarts:
 
 ## 14) Practical tips
 
-1. For stable ticket farming, keep the ball moving as long as possible: multiplier grows over time and accelerates score gain.
-2. For safer table nudges, use `Tennis Ball` (reduces Tilt chance from 20% to 5%).
-3. `Extra Ball` is very strong for survivability: life is lost only when all balls are gone.
-4. `Health Bonus` is useful, but often resets multiplier (because lives change).
-5. For `Gambling Tycoon`, buy only Golden crates in sequence; any Rusty/Brass purchase resets the streak.
-6. For `Pinball Wizard`, first complete prerequisite chain (`Survivalist` + `Ninja` + `Jackpot` + base achievements), otherwise a 500k run may not count immediately.
-7. For `One of a Kind` and `Straight Flush`, unlock regular `Jackpot` first, then target the required triples.
+1. For stable ball farming, keep at least one ball moving: multiplier grows over time and speeds up score-based ball income.
+2. `Extra Ball` is one of the strongest survival perks because life is reduced only when all active balls are gone.
+3. `Health Bonus` helps survivability, but each life change resets multiplier to `x1`.
+4. If inventory is full (3 slots), spend/use perks before buying another capsule or purchase will fail.
+5. Use Basic Capsule (`3` balls) for faster economy cycling, and Premium Capsule (`7` balls) when you want stronger recovery/control perks (`Angel Wings`, `Extra Ball`).
 
 ---
 
