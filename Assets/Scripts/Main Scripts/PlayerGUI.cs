@@ -8,6 +8,8 @@ using TMPro;
 
 public class PlayerGUI : MonoBehaviour
 {
+    const string RuntimePlayPanelRootName = "PSG1_PlayPanel";
+
     // Same-scene "singleton" pattern 
     private static PlayerGUI _instance;
     public static PlayerGUI instance
@@ -117,6 +119,7 @@ public class PlayerGUI : MonoBehaviour
 #endif
         EnsurePerkSlotsOverlay();
         EnsureHudTypography();
+        HideLegacyPlayPanelChildren();
         OpenPlayPanel();
 
         if (Reset != null) Reset.gameObject.SetActive(true);
@@ -150,11 +153,26 @@ public class PlayerGUI : MonoBehaviour
 
     void OpenPlayPanel()
     {
+        HideLegacyPlayPanelChildren();
         SetGameplayBackgroundActive(false);
         SuppressLegacyPopups(PlayPanel != null ? PlayPanel.transform.parent as RectTransform : null);
         RestoreMenuBackground();
         PlayPanel.SetActive(true);
         GameOverPanel.SetActive(false);
+    }
+
+    void HideLegacyPlayPanelChildren()
+    {
+        if (PlayPanel == null) return;
+
+        foreach (Transform child in PlayPanel.transform)
+        {
+            if (child == null) continue;
+
+            bool keepVisible = string.Equals(child.name, RuntimePlayPanelRootName, StringComparison.Ordinal);
+            if (child.gameObject.activeSelf != keepVisible)
+                child.gameObject.SetActive(keepVisible);
+        }
     }
 
     void LateUpdate()
