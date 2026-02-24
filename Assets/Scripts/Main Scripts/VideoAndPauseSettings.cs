@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class VideoAndPauseSettings : MonoBehaviour
 {
@@ -15,7 +16,8 @@ public class VideoAndPauseSettings : MonoBehaviour
     #endif
     void Awake()
     {
-        UnpauseButton.onClick.AddListener(Unpause);
+        if (UnpauseButton != null)
+            UnpauseButton.onClick.AddListener(Unpause);
 
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
@@ -26,17 +28,38 @@ public class VideoAndPauseSettings : MonoBehaviour
 
     public void Update()
     {
-        if(InputAdapter.PausePressedThisFrame()) Pause();
+        if (PausePanel != null && PausePanel.activeInHierarchy)
+        {
+            if (UnpauseButton != null && UnpauseButton.isActiveAndEnabled)
+            {
+                EventSystem eventSystem = EventSystem.current;
+                if (eventSystem != null && eventSystem.currentSelectedGameObject != UnpauseButton.gameObject)
+                    eventSystem.SetSelectedGameObject(UnpauseButton.gameObject);
+            }
+
+            if (InputAdapter.MenuSubmitPressedThisFrame() ||
+                InputAdapter.MenuBackPressedThisFrame() ||
+                InputAdapter.MenuDailyDropPressedThisFrame())
+            {
+                Unpause();
+            }
+
+            return;
+        }
+
+        if (InputAdapter.PausePressedThisFrame()) Pause();
     }
 
     public void Pause()
     {
+        if (PausePanel == null) return;
         PausePanel.SetActive(true);
         Time.timeScale = 0;
     }
 
     void Unpause()
     {
+        if (PausePanel == null) return;
         PausePanel.SetActive(false);
         Time.timeScale = 1;
     }

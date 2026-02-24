@@ -11,7 +11,42 @@ public class WalletConnectUI : MonoBehaviour
     const string RootObjectName = "WalletConnectUIRoot";
     const string ButtonObjectName = "WalletConnectButton";
     const string StatusObjectName = "WalletConnectStatus";
-    const string SolanaWeb3TypeName = "Solana.Unity.SDK.Web3";
+    const string PreferredWalletProviderName = "Lightning Today";
+    const string PreferredWalletIdentityUri = "https://lightning.today/";
+    const string PreferredWalletIconUri = "/favicon.ico";
+
+    static readonly string[] Web3TypeCandidates =
+    {
+        "Solana.Unity.SDK.Web3",
+        "Magicblock.Solana.Unity.SDK.Web3"
+    };
+
+    static readonly string[] LoginMethodCandidates =
+    {
+        "LoginWalletAdapterWithSIWS",
+        "LoginWalletAdapter",
+        "LoginWithWalletAdapter",
+        "LoginWallet",
+        "ConnectWallet",
+        "ConnectAsync",
+        "Connect",
+        "LoginAsync",
+        "Login"
+    };
+
+    static readonly string[] LogoutMethodCandidates =
+    {
+        "LogoutWalletAdapter",
+        "LogoutWallet",
+        "DisconnectWallet",
+        "DisconnectAsync",
+        "Disconnect",
+        "LogoutAsync",
+        "Logout"
+    };
+
+    static Type cachedWeb3Type;
+    static bool hasResolvedWeb3Type;
 
     Button connectButton;
     TMP_Text buttonLabel;
@@ -19,6 +54,7 @@ public class WalletConnectUI : MonoBehaviour
     GameObject walletRoot;
     bool isConnecting;
     string editorMockAddress;
+    int editorMockAddressIndex;
 
     [Header("Standalone Widget")]
     [SerializeField]
@@ -193,6 +229,17 @@ public class WalletConnectUI : MonoBehaviour
             OnConnectPressed();
     }
 
+    public void UseNextEditorMockWallet()
+    {
+        #if UNITY_EDITOR
+        editorMockAddressIndex++;
+        editorMockAddress = BuildEditorMockAddress(editorMockAddressIndex);
+        RefreshConnectionStatus();
+        #else
+        Debug.LogWarning("WalletConnectUI: Mock wallet cycling is available in Unity Editor only.");
+        #endif
+    }
+
     async void OnConnectPressed()
     {
         if (isConnecting) return;
@@ -259,7 +306,7 @@ public class WalletConnectUI : MonoBehaviour
         if (!IsWalletAdapterSupportedRuntime())
         {
             #if UNITY_EDITOR
-            editorMockAddress ??= BuildEditorMockAddress();
+            editorMockAddress ??= BuildEditorMockAddress(editorMockAddressIndex);
             SetStatus($"Wallet: {ShortAddress(editorMockAddress)} (mock)");
             Debug.Log("WalletConnectUI: Editor mock wallet connected.");
             return true;
@@ -285,13 +332,7 @@ public class WalletConnectUI : MonoBehaviour
             return false;
         }
 
-        MethodInfo loginMethod = FindMethod(web3Type, new[]
-        {
-            "LoginWalletAdapterWithSIWS",
-            "LoginWalletAdapter",
-            "LoginWallet",
-            "ConnectWallet"
-        });
+        MethodInfo loginMethod = FindMethod(web3Type, LoginMethodCandidates, out object[] loginMethodArgs);
 
         if (loginMethod == null)
         {
@@ -303,7 +344,7 @@ public class WalletConnectUI : MonoBehaviour
         object invocationResult;
         try
         {
-            invocationResult = loginMethod.Invoke(web3Instance, null);
+            invocationResult = loginMethod.Invoke(loginMethod.IsStatic ? null : web3Instance, loginMethodArgs);
         }
         catch (TargetInvocationException tie) when (tie.InnerException != null)
         {
@@ -333,14 +374,7 @@ public class WalletConnectUI : MonoBehaviour
         object web3Instance = GetWeb3Instance(web3Type);
         if (web3Instance == null) return false;
 
-        MethodInfo logoutMethod = FindMethod(web3Type, new[]
-        {
-            "LogoutWalletAdapter",
-            "LogoutWallet",
-            "DisconnectWallet",
-            "Disconnect",
-            "Logout"
-        });
+        MethodInfo logoutMethod = FindMethod(web3Type, LogoutMethodCandidates, out object[] logoutMethodArgs);
 
         if (logoutMethod == null)
         {
@@ -351,7 +385,7 @@ public class WalletConnectUI : MonoBehaviour
         object invocationResult;
         try
         {
-            invocationResult = logoutMethod.Invoke(web3Instance, null);
+            invocationResult = logoutMethod.Invoke(logoutMethod.IsStatic ? null : web3Instance, logoutMethodArgs);
         }
         catch (TargetInvocationException tie) when (tie.InnerException != null)
         {
@@ -418,7 +452,11 @@ public class WalletConnectUI : MonoBehaviour
         return null;
     }
 
-    static string BuildEditorMockAddress() => "Ed1torMock11111111111111111111111111111111111";
+    static string BuildEditorMockAddress(int index)
+    {
+        int safeIndex = Math.Abs(index % 1000000);
+        return $"EdMock{safeIndex:000000}1111111111111111111111111111";
+    }
 
     static string ExtractAddress(object candidate)
     {
@@ -447,13 +485,76 @@ public class WalletConnectUI : MonoBehaviour
 
     static Type ResolveWeb3Type()
     {
-        Type direct = Type.GetType($"{SolanaWeb3TypeName}, Solana.Unity.SDK");
-        if (direct != null) return direct;
+        if (hasResolvedWeb3Type)
+            return cachedWeb3Type;
+
+        hasResolvedWeb3Type = true;
+
+        for (int i = 0; i < Web3TypeCandidates.Length; i++)
+        {
+            string typeName = Web3TypeCandidates[i];
+            if (string.IsNullOrWhiteSpace(typeName)) continue;
+
+            Type direct = Type.GetType(typeName);
+            if (direct != null)
+            {
+                cachedWeb3Type = direct;
+                return cachedWeb3Type;
+            }
+
+            Type fromKnownAssembly = Type.GetType($"{typeName}, Solana.Unity.SDK");
+            if (fromKnownAssembly != null)
+            {
+                cachedWeb3Type = fromKnownAssembly;
+                return cachedWeb3Type;
+            }
+        }
 
         foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Type found = assembly.GetType(SolanaWeb3TypeName);
-            if (found != null) return found;
+            for (int i = 0; i < Web3TypeCandidates.Length; i++)
+            {
+                Type found = assembly.GetType(Web3TypeCandidates[i]);
+                if (found == null) continue;
+
+                cachedWeb3Type = found;
+                return cachedWeb3Type;
+            }
+        }
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException exception)
+            {
+                types = exception.Types;
+            }
+
+            if (types == null) continue;
+
+            for (int i = 0; i < types.Length; i++)
+            {
+                Type candidate = types[i];
+                if (candidate == null || candidate.Name != "Web3") continue;
+                if (candidate.IsAbstract) continue;
+
+                string namespaceName = candidate.Namespace ?? string.Empty;
+                if (namespaceName.IndexOf("solana", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                MethodInfo instanceGetter = candidate.GetMethod("get_Instance", BindingFlags.Public | BindingFlags.Static);
+                if (instanceGetter == null) continue;
+
+                MethodInfo loginMethod = FindMethod(candidate, LoginMethodCandidates, out _);
+                if (loginMethod == null) continue;
+
+                cachedWeb3Type = candidate;
+                return cachedWeb3Type;
+            }
         }
 
         return null;
@@ -490,9 +591,12 @@ public class WalletConnectUI : MonoBehaviour
         object walletAdapterOptions = EnsureMemberInitialized(web3Instance, "solanaWalletAdapterOptions");
         if (walletAdapterOptions == null) return;
 
-        EnsureMemberInitialized(walletAdapterOptions, "solanaMobileWalletAdapterOptions");
+        object mobileWalletAdapterOptions = EnsureMemberInitialized(walletAdapterOptions, "solanaMobileWalletAdapterOptions");
         EnsureMemberInitialized(walletAdapterOptions, "solanaWalletAdapterWebGLOptions");
         EnsureMemberInitialized(walletAdapterOptions, "phantomWalletOptions");
+
+        ApplyWalletMetadataDefaults(walletAdapterOptions);
+        ApplyWalletMetadataDefaults(mobileWalletAdapterOptions);
     }
 
     static object EnsureMemberInitialized(object target, string memberName)
@@ -522,16 +626,93 @@ public class WalletConnectUI : MonoBehaviour
         return initialized;
     }
 
-    static MethodInfo FindMethod(Type type, IReadOnlyList<string> names)
+    static MethodInfo FindMethod(Type type, IReadOnlyList<string> names, out object[] invocationArgs)
     {
+        invocationArgs = Array.Empty<object>();
+
         foreach (string name in names)
         {
-            MethodInfo method = type.GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
-            if (method != null && method.GetParameters().Length == 0)
+            MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            for (int i = 0; i < methods.Length; i++)
+            {
+                MethodInfo method = methods[i];
+                if (method == null || method.Name != name) continue;
+                if (!TryBuildInvocationArgs(method, out invocationArgs)) continue;
+
                 return method;
+            }
         }
 
+        invocationArgs = Array.Empty<object>();
         return null;
+    }
+
+    static bool TryBuildInvocationArgs(MethodInfo method, out object[] args)
+    {
+        ParameterInfo[] parameters = method.GetParameters();
+        if (parameters.Length == 0)
+        {
+            args = Array.Empty<object>();
+            return true;
+        }
+
+        args = new object[parameters.Length];
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            ParameterInfo parameter = parameters[i];
+            if (parameter.HasDefaultValue)
+            {
+                args[i] = parameter.DefaultValue;
+                continue;
+            }
+
+            Type parameterType = parameter.ParameterType;
+            if (!parameterType.IsValueType || Nullable.GetUnderlyingType(parameterType) != null)
+            {
+                args[i] = null;
+                continue;
+            }
+
+            args[i] = Activator.CreateInstance(parameterType);
+        }
+
+        return true;
+    }
+
+    static void ApplyWalletMetadataDefaults(object target)
+    {
+        if (target == null) return;
+
+        SetStringMemberIfEmpty(target, "name", PreferredWalletProviderName);
+        SetStringMemberIfEmpty(target, "appName", PreferredWalletProviderName);
+        SetStringMemberIfEmpty(target, "dappName", PreferredWalletProviderName);
+        SetStringMemberIfEmpty(target, "applicationName", PreferredWalletProviderName);
+        SetStringMemberIfEmpty(target, "identityUri", PreferredWalletIdentityUri);
+        SetStringMemberIfEmpty(target, "iconUri", PreferredWalletIconUri);
+    }
+
+    static void SetStringMemberIfEmpty(object target, string memberName, string value)
+    {
+        if (target == null || string.IsNullOrWhiteSpace(memberName) || string.IsNullOrWhiteSpace(value))
+            return;
+
+        Type type = target.GetType();
+        FieldInfo field = type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+        if (field != null && field.FieldType == typeof(string))
+        {
+            string current = field.GetValue(target) as string;
+            if (string.IsNullOrWhiteSpace(current))
+                field.SetValue(target, value);
+            return;
+        }
+
+        PropertyInfo property = type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+        if (property == null || !property.CanRead || !property.CanWrite || property.PropertyType != typeof(string))
+            return;
+
+        string existing = property.GetValue(target) as string;
+        if (string.IsNullOrWhiteSpace(existing))
+            property.SetValue(target, value);
     }
 
     static object GetMemberValue(object target, string memberName)

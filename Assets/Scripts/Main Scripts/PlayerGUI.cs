@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
@@ -109,6 +110,7 @@ public class PlayerGUI : MonoBehaviour
     GameObject cachedAchievementGui;
     TMP_FontAsset hudFontAsset;
     TMP_Text perkActivationHintText;
+    bool gameOverReturnInProgress;
 
     float deltaTime = 0, refreshRate = 0;
 
@@ -127,8 +129,10 @@ public class PlayerGUI : MonoBehaviour
 
         DeleteProgress.onClick.AddListener(RestartProgress);
         Play.onClick.AddListener(PlayGame);
-        PlayAgain.onClick.AddListener(OpenPlayPanel);
+        PlayAgain.onClick.AddListener(ReturnToMainMenuFromGameOver);
         Reset.onClick.AddListener(ResetGame);
+
+        ConfigureGameOverButtonLabel();
     }
 
     static void EnsurePerkSlotsOverlay()
@@ -1429,9 +1433,13 @@ public class PlayerGUI : MonoBehaviour
         HighScore.text = text;
     }
 
-#if UNITY_EDITOR
     void Update()
     {
+        HandleGameOverInput();
+
+#if UNITY_EDITOR
+        if (FPS == null) return;
+
         refreshRate += Time.deltaTime;
         deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
 
@@ -1440,6 +1448,48 @@ public class PlayerGUI : MonoBehaviour
             FPS.text = $"FPS: {((int) (1f / deltaTime))}";
             refreshRate = 0;
         }
-    }
 #endif
+    }
+
+    void HandleGameOverInput()
+    {
+        if (GameOverPanel == null || !GameOverPanel.activeInHierarchy) return;
+        if (PlayAgain == null || !PlayAgain.isActiveAndEnabled) return;
+        if (gameOverReturnInProgress) return;
+
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem != null && eventSystem.currentSelectedGameObject != PlayAgain.gameObject)
+            eventSystem.SetSelectedGameObject(PlayAgain.gameObject);
+
+        if (InputAdapter.MenuSubmitPressedThisFrame() ||
+            InputAdapter.MenuDailyDropPressedThisFrame() ||
+            InputAdapter.MenuBackPressedThisFrame())
+        {
+            ReturnToMainMenuFromGameOver();
+        }
+    }
+
+    void ConfigureGameOverButtonLabel()
+    {
+        if (PlayAgain == null) return;
+
+        TMP_Text label = PlayAgain.GetComponentInChildren<TMP_Text>(true);
+        if (label == null) return;
+
+        label.text = "GO TO MAIN MENU";
+    }
+
+    void ReturnToMainMenuFromGameOver()
+    {
+        if (gameOverReturnInProgress) return;
+        StartCoroutine(ReturnToMainMenuNextFrame());
+    }
+
+    IEnumerator ReturnToMainMenuNextFrame()
+    {
+        gameOverReturnInProgress = true;
+        yield return null;
+        OpenPlayPanel();
+        gameOverReturnInProgress = false;
+    }
 }

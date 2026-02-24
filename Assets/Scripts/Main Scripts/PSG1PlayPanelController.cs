@@ -112,6 +112,10 @@ public class PSG1PlayPanelController : MonoBehaviour
     readonly Color queueFullFrameColor = new Color(0.23f, 0.2f, 0.12f, 0.55f);
     readonly Color slotFlashColor = new Color(1f, 0.93f, 0.62f, 1f);
 
+    [Header("Temporary Utility Buttons")]
+    [SerializeField]
+    bool showTemporaryUtilityButtons = false;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
@@ -181,7 +185,7 @@ public class PSG1PlayPanelController : MonoBehaviour
         selectedMainMenuFocus = MainMenuFocusLaunch;
         SetShopPanelVisible(false);
         if (launchButtonRoot != null) launchButtonRoot.SetActive(true);
-        if (utilityButtonsRoot != null) utilityButtonsRoot.SetActive(true);
+        if (utilityButtonsRoot != null) utilityButtonsRoot.SetActive(showTemporaryUtilityButtons);
         if (actionZoneRoot != null) actionZoneRoot.SetActive(true);
         RefreshShopRow();
         RefreshInventoryRow();
@@ -607,10 +611,22 @@ public class PSG1PlayPanelController : MonoBehaviour
         utilityLayout.childForceExpandWidth = false;
         utilityLayout.childForceExpandHeight = false;
 
+        if (!showTemporaryUtilityButtons)
+        {
+            utilityRow.gameObject.SetActive(false);
+            return;
+        }
+
         Button resetPerksButton = CreateUtilityButton(utilityRow, "Reset_Perks_Button", "Reset Perks", OnResetPerksPressed, 260f);
         Button addBallsButton = CreateUtilityButton(utilityRow, "Add_Balls_Button", "+100 Balls", OnAddBallsPressed, 240f);
+        Button resetBallsButton = CreateUtilityButton(utilityRow, "Reset_Balls_Button", "Reset Balls", OnResetBallsPressed, 240f);
+        Button resetDailyButton = CreateUtilityButton(utilityRow, "Reset_Daily_Button", "Reset Daily", OnResetDailyClaimPressed, 240f);
+        Button nextWalletButton = CreateUtilityButton(utilityRow, "Next_Wallet_Button", "Next Wallet", OnNextWalletPressed, 240f);
         ApplyStyleToButtonLabel(resetPerksButton, ButtonTextStyle.CounterDark, 22f);
         ApplyStyleToButtonLabel(addBallsButton, ButtonTextStyle.CounterDark, 22f);
+        ApplyStyleToButtonLabel(resetBallsButton, ButtonTextStyle.CounterDark, 22f);
+        ApplyStyleToButtonLabel(resetDailyButton, ButtonTextStyle.CounterDark, 22f);
+        ApplyStyleToButtonLabel(nextWalletButton, ButtonTextStyle.CounterDark, 22f);
     }
 
     void HideLegacyMenu(GameObject playPanelRoot)
@@ -877,6 +893,27 @@ public class PSG1PlayPanelController : MonoBehaviour
         RefreshShopRow();
     }
 
+    void OnResetBallsPressed()
+    {
+        SetCurrentBalls(0);
+        PlayerPrefs.Save();
+        RefreshShopRow();
+    }
+
+    void OnResetDailyClaimPressed()
+    {
+        ResetDailyClaimState();
+        RefreshWalletAndDailyState();
+    }
+
+    void OnNextWalletPressed()
+    {
+        walletUi = WalletConnectUI.Instance;
+        if (walletUi == null) return;
+        walletUi.UseNextEditorMockWallet();
+        RefreshWalletAndDailyState();
+    }
+
     void OnWalletPressed()
     {
         walletUi = WalletConnectUI.Instance;
@@ -893,15 +930,16 @@ public class PSG1PlayPanelController : MonoBehaviour
             return;
         }
 
+        string dailyClaimStorageKey = GetDailyClaimStorageKey();
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-        if (PlayerPrefs.GetString(DailyClaimKey, string.Empty) == today)
+        if (PlayerPrefs.GetString(dailyClaimStorageKey, string.Empty) == today)
         {
             RefreshWalletAndDailyState();
             return;
         }
 
         SetCurrentBalls(GetCurrentBalls() + DailyRewardAmount);
-        PlayerPrefs.SetString(DailyClaimKey, today);
+        PlayerPrefs.SetString(dailyClaimStorageKey, today);
         PlayerPrefs.Save();
         RefreshWalletAndDailyState();
     }
@@ -1036,10 +1074,30 @@ public class PSG1PlayPanelController : MonoBehaviour
             return;
         }
 
+        string dailyClaimStorageKey = GetDailyClaimStorageKey();
         string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-        bool alreadyClaimed = PlayerPrefs.GetString(DailyClaimKey, string.Empty) == today;
+        bool alreadyClaimed = PlayerPrefs.GetString(dailyClaimStorageKey, string.Empty) == today;
         dailyClaimButton.interactable = !alreadyClaimed;
         dailyClaimText.text = alreadyClaimed ? "CLAIMED TODAY" : "GET DAILY +10";
+    }
+
+    string GetDailyClaimStorageKey()
+    {
+        walletUi = WalletConnectUI.Instance;
+        string connectedAddress = walletUi != null ? walletUi.ConnectedAddress : null;
+        if (string.IsNullOrWhiteSpace(connectedAddress))
+            return DailyClaimKey;
+
+        return $"{DailyClaimKey}_{connectedAddress}";
+    }
+
+    void ResetDailyClaimState()
+    {
+        string dailyClaimStorageKey = GetDailyClaimStorageKey();
+        PlayerPrefs.DeleteKey(dailyClaimStorageKey);
+        if (!string.Equals(dailyClaimStorageKey, DailyClaimKey, StringComparison.Ordinal))
+            PlayerPrefs.DeleteKey(DailyClaimKey);
+        PlayerPrefs.Save();
     }
 
     static string FormatWalletButtonLabel(string address)
@@ -1081,7 +1139,7 @@ public class PSG1PlayPanelController : MonoBehaviour
         if (launchButtonRoot != null)
             launchButtonRoot.SetActive(!visible);
         if (utilityButtonsRoot != null)
-            utilityButtonsRoot.SetActive(!visible);
+            utilityButtonsRoot.SetActive(showTemporaryUtilityButtons && !visible);
         if (actionZoneRoot != null)
             actionZoneRoot.SetActive(!visible);
         if (shopCloseButtonRoot != null)

@@ -4,6 +4,7 @@
 #
 /[Ll]ibrary/
 /[Tt]emp/
+/.utmp/
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
@@ -65,7 +66,7 @@ crashlytics-build.properties
 
 # Local sound exploration/audit artifacts
 /audio-audit-2026-02-2*/
-
+/Recordings/
 # Unity auto-recovery artifacts (local only)
 /Assets/_Recovery/
 /Assets/_Recovery.meta
