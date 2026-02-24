@@ -31,6 +31,24 @@ public class Field : MonoBehaviour
     [SerializeField]
     AudioClip Powerup;
 
+    AudioSource speaker;
+
+    void Awake()
+    {
+        speaker = GetComponent<AudioSource>();
+        OverrideClipIfFound(ref Death, "drain_loss");
+        OverrideClipIfFound(ref Boost, "nudge_success");
+        OverrideClipIfFound(ref Tilt, "tilt_alarm_short");
+        OverrideClipIfFound(ref Powerup, "powerup_activate_arcade");
+    }
+
+    void OverrideClipIfFound(ref AudioClip slot, string clipName)
+    {
+        AudioClip clip = SoundCatalog.Get(clipName);
+        if (clip)
+            slot = clip;
+    }
+
     public bool HasBall
     {
         get => BallsInField.Count > 0;
@@ -52,13 +70,13 @@ public class Field : MonoBehaviour
     public List<Rigidbody> BallsInField = new List<Rigidbody>();
 
     public void PowerupSound() => 
-        GetComponent<AudioSource>().PlayOneShot(Powerup);
+        speaker?.PlayOneShot(Powerup);
 
     public void TiltSound() => 
-        GetComponent<AudioSource>().PlayOneShot(Tilt);
+        speaker?.PlayOneShot(Tilt);
 
     public void BoostSound() => 
-        GetComponent<AudioSource>().PlayOneShot(Boost);
+        speaker?.PlayOneShot(Boost);
 
     public void EliminateBalls()
     {
@@ -86,7 +104,7 @@ public class Field : MonoBehaviour
             Destroy(c.gameObject);
 
             // Plays death sound
-            GetComponent<AudioSource>().PlayOneShot(Death);
+            speaker?.PlayOneShot(Death);
         }
     }
 }

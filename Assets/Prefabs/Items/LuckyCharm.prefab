@@ -46,6 +46,6 @@ MonoBehaviour:
   Name: Lucky Charm
   Description: Random multipliers everytime a ball hits something.
   Icon: {fileID: 21300000, guid: ebe1db584719c9441912ade4547ac83f, type: 3}
-  TrailMaterial: {fileID: 2100000, guid: 84bf841e6f26b504c8add9ca299b9d11, type: 2}
+  TrailMaterial: {fileID: 2100000, guid: ce10e189ff734cd1a8e171070e09fb4e, type: 2}
   CustomPhysicMaterial: {fileID: 0}
   PoweredUpMaterial: {fileID: 0}

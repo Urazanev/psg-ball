@@ -12,6 +12,13 @@ public static class InputAdapter
     static InputAction nudgeLeft;
     static InputAction nudgeRight;
     static InputAction useItem;
+    static InputAction menuLeft;
+    static InputAction menuRight;
+    static InputAction menuUp;
+    static InputAction menuDown;
+    static InputAction menuSubmit;
+    static InputAction menuDailyDrop;
+    static InputAction menuBack;
 
     static void EnsureInitialized()
     {
@@ -39,6 +46,13 @@ public static class InputAdapter
         nudgeLeft = gameplay.FindAction("NudgeLeft", false);
         nudgeRight = gameplay.FindAction("NudgeRight", false);
         useItem = gameplay.FindAction("UseItem", false);
+        menuLeft = gameplay.FindAction("MenuLeft", false);
+        menuRight = gameplay.FindAction("MenuRight", false);
+        menuUp = gameplay.FindAction("MenuUp", false);
+        menuDown = gameplay.FindAction("MenuDown", false);
+        menuSubmit = gameplay.FindAction("MenuSubmit", false);
+        menuDailyDrop = gameplay.FindAction("MenuDailyDrop", false);
+        menuBack = gameplay.FindAction("MenuBack", false);
 
         gameplay.Enable();
     }
@@ -130,4 +144,79 @@ public static class InputAdapter
 
     public static bool UseItemPressedThisFrame() =>
         ReadPressedThisFrame(useItem, () => Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.LeftApple));
+
+    public static bool MenuLeftPressedThisFrame() =>
+        ReadPressedThisFrame(menuLeft ?? nudgeLeft, () => Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A));
+
+    public static bool MenuRightPressedThisFrame() =>
+        ReadPressedThisFrame(menuRight ?? nudgeRight, () => Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D));
+
+    public static bool MenuUpPressedThisFrame()
+    {
+        EnsureInitialized();
+        bool actionValue = menuUp != null && menuUp.WasPressedThisFrame();
+        bool dpadValue = false;
+
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad != null && gamepad.dpad.up.wasPressedThisFrame)
+            {
+                dpadValue = true;
+                break;
+            }
+        }
+
+        if (IsPsg1Connected())
+            return actionValue || dpadValue;
+
+        return actionValue || dpadValue || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W);
+    }
+
+    public static bool MenuDownPressedThisFrame()
+    {
+        EnsureInitialized();
+        bool actionValue = menuDown != null && menuDown.WasPressedThisFrame();
+        bool dpadValue = false;
+
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad != null && gamepad.dpad.down.wasPressedThisFrame)
+            {
+                dpadValue = true;
+                break;
+            }
+        }
+
+        if (IsPsg1Connected())
+            return actionValue || dpadValue;
+
+        return actionValue || dpadValue || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S);
+    }
+
+    public static bool MenuSubmitPressedThisFrame() =>
+        ReadPressedThisFrame(menuSubmit ?? plunger, () => Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return));
+
+    public static bool MenuDailyDropPressedThisFrame() =>
+        ReadPressedThisFrame(menuDailyDrop ?? useItem, () => Input.GetKeyDown(KeyCode.X));
+
+    public static bool MenuBackPressedThisFrame()
+    {
+        EnsureInitialized();
+        bool actionValue = menuBack != null && menuBack.WasPressedThisFrame();
+        bool eastValue = false;
+
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (gamepad != null && gamepad.buttonEast.wasPressedThisFrame)
+            {
+                eastValue = true;
+                break;
+            }
+        }
+
+        if (IsPsg1Connected())
+            return actionValue || eastValue;
+
+        return actionValue || eastValue || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Backspace);
+    }
 }

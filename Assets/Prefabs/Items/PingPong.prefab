@@ -46,6 +46,6 @@ MonoBehaviour:
   Name: Ping Pong
   Description: Insane flipper force and cool ball effects.
   Icon: {fileID: 21300000, guid: 3853ba30d0bdd014298ee853eec11d14, type: 3}
-  TrailMaterial: {fileID: 2100000, guid: 20b1452461980b04e9cf9c687622f111, type: 2}
+  TrailMaterial: {fileID: 2100000, guid: ce10e189ff734cd1a8e171070e09fb4e, type: 2}
   CustomPhysicMaterial: {fileID: 0}
   PoweredUpMaterial: {fileID: 2100000, guid: 6ee718643ae6fad44bee05cfb665c04d, type: 2}

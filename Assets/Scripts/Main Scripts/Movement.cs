@@ -24,6 +24,9 @@ public class Movement : MonoBehaviour
     [SerializeField]
     HingeJoint RightFlipper;
 
+    public HingeJoint LeftFlipperJoint => LeftFlipper;
+    public HingeJoint RightFlipperJoint => RightFlipper;
+
     public int FlipperMotorVelocity;
     public int FlipperMotorForce;
 
@@ -47,8 +50,18 @@ public class Movement : MonoBehaviour
     float force;
     bool activated;
 
+    void PlayFlipperSound(HingeJoint flipper)
+    {
+        AudioSource speaker = flipper.GetComponent<AudioSource>();
+        if (!speaker) return;
+
+        if (!SoundCatalog.PlayRandom(speaker, "flipper_click_"))
+            speaker.Play();
+    }
+
     void Update()
     {
+        if(PlayerGUI.instance != null && PlayerGUI.instance.IsMainMenuVisible) return;
         if(Player.instance.Lives < 0) return;
 
         // Launching mechanism
@@ -65,7 +78,7 @@ public class Movement : MonoBehaviour
 
         // Right flipper
         if (InputAdapter.RightFlipperPressedThisFrame())
-            RightFlipper.GetComponent<AudioSource>().Play();
+            PlayFlipperSound(RightFlipper);
 
         if (InputAdapter.RightFlipperHeld())
             RightFlipper.motor = RotateFlipper(FlipperMotorVelocity, FlipperMotorForce);
@@ -75,7 +88,7 @@ public class Movement : MonoBehaviour
         
         // Left flipper
         if (InputAdapter.LeftFlipperPressedThisFrame())
-            LeftFlipper.GetComponent<AudioSource>().Play();
+            PlayFlipperSound(LeftFlipper);
 
         if (InputAdapter.LeftFlipperHeld())
             LeftFlipper.motor = RotateFlipper(-FlipperMotorVelocity, FlipperMotorForce);
@@ -116,6 +129,12 @@ public class Movement : MonoBehaviour
                 force *= Random.Range(0.7f, 0.5f);
             }
         }
+
+        float normalizedCompression = MaxForce > 0
+            ? Mathf.Clamp01(force / MaxForce)
+            : 0f;
+        float currentCompression = Mathf.Lerp(1f, 0.3f, normalizedCompression);
+        Plunger.instance.SetCompression(currentCompression);
     }
 
     void Boost(Vector3 direction, float force)
@@ -148,5 +167,6 @@ public class Movement : MonoBehaviour
 
         force = MinForce;
         activated = false;
+        Plunger.instance.ResetCompression();
     }
 }

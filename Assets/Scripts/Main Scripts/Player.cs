@@ -5,6 +5,7 @@ using TMPro;
 
 public class Player : MonoBehaviour
 {
+    static string FormatMultiplierLabel(float value) => $"X{value:0.#}";
 
     // Same-scene "singleton" pattern 
     private static Player _instance;
@@ -97,7 +98,7 @@ public class Player : MonoBehaviour
             _multiplier = value;
 
             // Updates UI text
-            PlayerGUI.instance.Multiplier.text = $"{_multiplier.ToString("0.0")}x";
+            PlayerGUI.instance.Multiplier.text = FormatMultiplierLabel(_multiplier);
         }
     }
 
@@ -122,7 +123,7 @@ public class Player : MonoBehaviour
         Tickets = PlayerPrefs.GetInt("ticketCount", 0);
 
         PlayerGUI.instance.Score.text = _score.ToString();
-        PlayerGUI.instance.Multiplier.text = $"{_multiplier}x";
+        PlayerGUI.instance.Multiplier.text = FormatMultiplierLabel(_multiplier);
         PlayerGUI.instance.Lives.text = (_lives < 0 ? "0" : _lives.ToString());
 
         Inventory.GetMemory();

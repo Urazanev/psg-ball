@@ -47,6 +47,6 @@ MonoBehaviour:
   Description: When activated transforms the ball into a ghost and teleports it to
     the spawnpoint.
   Icon: {fileID: 21300000, guid: 65f3df495f8c6d54487c1907d9ac0ad8, type: 3}
-  TrailMaterial: {fileID: 2100000, guid: dc85560ca3165d8489b8f2cc5705030c, type: 2}
+  TrailMaterial: {fileID: 2100000, guid: ce10e189ff734cd1a8e171070e09fb4e, type: 2}
   CustomPhysicMaterial: {fileID: 0}
   PoweredUpMaterial: {fileID: 2100000, guid: 4443730cefaf00e45a7b54df20736e30, type: 2}

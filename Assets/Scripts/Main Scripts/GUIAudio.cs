@@ -29,6 +29,20 @@ public class GUIAudio : MonoBehaviour
     [SerializeField]
     AudioClip _achievementGet;
 
+    void Awake()
+    {
+        OverrideClipIfFound(ref _purchase, "ui_purchase_confirm");
+        OverrideClipIfFound(ref _purchaseFail, "ui_purchase_fail");
+        OverrideClipIfFound(ref _achievementGet, "ui_achievement_unlock");
+    }
+
+    void OverrideClipIfFound(ref AudioClip slot, string clipName)
+    {
+        AudioClip clip = SoundCatalog.Get(clipName);
+        if (clip)
+            slot = clip;
+    }
+
     public static AudioSource Speaker
     {
         get => instance._UISpeaker;

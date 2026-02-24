@@ -12,8 +12,5 @@ public class LuckyCharm : Item
 
     public override void OnDeath() {}
 
-    public override void OnCollision()
-    {
-        Player.instance.Multiplier = Random.Range(0.01f, 3.6f);
-    }
+    public override void OnCollision() {}
 }

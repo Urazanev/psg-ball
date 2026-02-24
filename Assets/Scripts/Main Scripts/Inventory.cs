@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 public static class Inventory
 {
-    // Keep this true while we iterate on a simpler product build.
-    // It only narrows crate drop tables and does not remove item scripts/mechanics.
-    private const bool UsePerksLiteLootTables = true;
+    const float ToyCoreGlossSmoothness = 0.88f;
+
+    static readonly Dictionary<Material, Material> GlossBallMaterialCache = new Dictionary<Material, Material>();
 
     public static Item[] Slots = new Item[3] { Items.NoItem, Items.NoItem, Items.NoItem };
     public static Item Equipped = Items.NoItem;
@@ -111,17 +111,31 @@ public static class Inventory
         // Method called for all items on activation
         foreach(Rigidbody ball in Field.instance.BallsInField)
         {
+            if (ball == null) continue;
+
             if(Equipped.HasTrail)
             {
-                ball.GetComponent<TrailRenderer>().enabled = true;
-                ball.GetComponent<TrailRenderer>().material = Equipped.TrailMaterial;
+                TrailRenderer trail = ball.GetComponent<TrailRenderer>();
+                if (trail != null)
+                {
+                    trail.enabled = true;
+                    trail.material = Equipped.TrailMaterial;
+                }
             }
 
             if(Equipped.ChangeBallMaterial)
-                ball.GetComponent<MeshRenderer>().material = Equipped.PoweredUpMaterial;
+            {
+                MeshRenderer meshRenderer = ball.GetComponent<MeshRenderer>();
+                if (meshRenderer != null)
+                    meshRenderer.material = GetToyCoreGlossBallMaterial(Equipped.PoweredUpMaterial);
+            }
 
             if(Equipped.HasCustomPhysicMaterial)
-                ball.GetComponent<SphereCollider>().material = Equipped.CustomPhysicMaterial;
+            {
+                SphereCollider sphereCollider = ball.GetComponent<SphereCollider>();
+                if (sphereCollider != null)
+                    sphereCollider.material = Equipped.CustomPhysicMaterial;
+            }
         }
 
         Equipped.OnEquip();
@@ -183,88 +197,28 @@ public static class Inventory
     static Item GenerateItemFromRarity(Crates rarity)
     {
         List<ItemIncidence> lootTable = new List<ItemIncidence>();
-
-        if(UsePerksLiteLootTables)
+        switch(rarity)
         {
-            switch(rarity)
-            {
-                case Crates.Rusty:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 4 },
-                        new ItemIncidence(){ item = Items.PingPong, incidence = 4 },
-                        new ItemIncidence(){ item = Items.TennisBall, incidence = 3 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
-                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 1 },
-                    };
-                    break;
-                case Crates.Brass:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 2 },
-                        new ItemIncidence(){ item = Items.PingPong, incidence = 2 },
-                        new ItemIncidence(){ item = Items.TennisBall, incidence = 2 },
-                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
-                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
-                    };
-                    break;
-                case Crates.Golden:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 2 },
-                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
-                    };
-                    break;
-            }
-        }
-        else
-        {
+            // Basic Box
+            case Crates.Rusty:
+                lootTable = new List<ItemIncidence>()
+                {
+                    new ItemIncidence(){ item = Items.PingPong, incidence = 35 },
+                    new ItemIncidence(){ item = Items.TicketPrize, incidence = 40 },
+                    new ItemIncidence(){ item = Items.HealthBonus, incidence = 25 }
+                };
+                break;
 
-            // Which lootTable to use
-            switch(rarity)
-            {
-                case Crates.Rusty:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.Fireball, incidence = 4 },
-                        new ItemIncidence(){ item = Items.WaterDroplet, incidence = 4 },
-                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 3 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                        new ItemIncidence(){ item = Items.PingPong, incidence = 3 },
-                        new ItemIncidence(){ item = Items.Rock, incidence = 4 },
-                        new ItemIncidence(){ item = Items.TennisBall, incidence = 1 },
-                    };
-                    break;
-                case Crates.Brass:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.Fireball, incidence = 2 },
-                        new ItemIncidence(){ item = Items.WaterDroplet, incidence = 1 },
-                        new ItemIncidence(){ item = Items.LuckyCharm, incidence = 4 },
-                        new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
-                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                        new ItemIncidence(){ item = Items.CameraFlip, incidence = 1 },
-                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 3 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                        new ItemIncidence(){ item = Items.TennisBall, incidence = 2 },
-                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 3 }
-                    };
-                    break;
-                case Crates.Golden:
-                    lootTable = new List<ItemIncidence>()
-                    {
-                        new ItemIncidence(){ item = Items.CurseOfAnubis, incidence = 1 },
-                        new ItemIncidence(){ item = Items.AngelWings, incidence = 2 },
-                        new ItemIncidence(){ item = Items.ExtraBall, incidence = 2 },
-                        new ItemIncidence(){ item = Items.HealthBonus, incidence = 1 },
-                        new ItemIncidence(){ item = Items.TicketPrize, incidence = 1 }
-                    };
-                    break;
-            }
+            // Pro Box (Golden reuses Pro table to keep legacy calls safe)
+            case Crates.Brass:
+            case Crates.Golden:
+                lootTable = new List<ItemIncidence>()
+                {
+                    new ItemIncidence(){ item = Items.ExtraBall, incidence = 35 },
+                    new ItemIncidence(){ item = Items.AngelWings, incidence = 40 },
+                    new ItemIncidence(){ item = Items.HealthBonus, incidence = 25 }
+                };
+                break;
         }
 
         // Return Item from incidence
@@ -293,5 +247,38 @@ public static class Inventory
         }
 
         return Items.NoItem;
+    }
+
+    static Material GetToyCoreGlossBallMaterial(Material sourceMaterial)
+    {
+        if (sourceMaterial == null) return null;
+
+        if (GlossBallMaterialCache.TryGetValue(sourceMaterial, out Material cached) && cached != null)
+            return cached;
+
+        Material glossMaterial = new Material(sourceMaterial);
+        glossMaterial.name = $"{sourceMaterial.name}_ToyCoreGloss_Runtime";
+        ApplyToyCoreGlossSettings(glossMaterial);
+        GlossBallMaterialCache[sourceMaterial] = glossMaterial;
+        return glossMaterial;
+    }
+
+    static void ApplyToyCoreGlossSettings(Material material)
+    {
+        if (material == null) return;
+
+        if (material.HasProperty("_Metallic"))
+            material.SetFloat("_Metallic", 0f);
+        if (material.HasProperty("_Smoothness"))
+            material.SetFloat("_Smoothness", ToyCoreGlossSmoothness);
+        if (material.HasProperty("_Glossiness"))
+            material.SetFloat("_Glossiness", ToyCoreGlossSmoothness);
+
+        if (material.HasProperty("_SpecularHighlights"))
+            material.SetFloat("_SpecularHighlights", 1f);
+        if (material.HasProperty("_EnvironmentReflections"))
+            material.SetFloat("_EnvironmentReflections", 1f);
+        if (material.HasProperty("_GlossyReflections"))
+            material.SetFloat("_GlossyReflections", 1f);
     }
 }

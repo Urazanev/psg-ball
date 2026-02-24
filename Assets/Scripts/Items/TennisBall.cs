@@ -4,15 +4,9 @@ using UnityEngine;
 
 public class TennisBall : Item
 {
-    public override void OnEquip()
-    {
-        Movement.instance.TiltChance = 20;
-    }
+    public override void OnEquip() {}
     
-    public override void OnUnequip()
-    {
-        Movement.instance.TiltChance = 5;
-    }
+    public override void OnUnequip() {}
 
     public override void OnScoring() {}
 

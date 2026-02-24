@@ -309,6 +309,29 @@ Tickets копятся двумя путями:
 
 Часть из них имеет только data-описание/материалы, часть имеет активную логику (например `Lucky Charm`, `Curse of Anubis`), но в текущем UX-потоке они выключены через loot table.
 
+## 9.3 Полный каталог иконок перков (что отдавать дизайнеру)
+
+Ниже полный список item-иконок из `Assets/Prefabs/Items/*.prefab` и их UI-файлы.
+
+| Перк (техническое имя) | Отображаемое имя | Файл иконки | Сейчас выпадает (Perks Lite) | Может выпадать в Full-таблицах |
+|---|---|---|---|---|
+| `AngelWings` | Angel Wings | `Assets/UI/Items/angel-wings.png` | Да (Brass, Golden hidden) | Да |
+| `CameraFlip` | Camera Flip | `Assets/UI/Items/camera-flip.png` | Да (Rusty, Brass) | Да |
+| `CurseOfAnubis` | Curse of Anubis | `Assets/UI/Items/curse-of-anubis.png` | Нет | Да (Brass, Golden) |
+| `ExtraBall` | Extra Ball | `Assets/UI/Items/extra-ball.png` | Да (Brass, Golden hidden) | Да |
+| `Fireball` | Fireball | `Assets/UI/Items/fireball.png` | Нет | Да (Rusty, Brass) |
+| `HealthBonus` | Health Bonus | `Assets/UI/Items/health-bonus.png` | Да (Rusty, Brass, Golden hidden) | Да |
+| `LuckyCharm` | Lucky Charm | `Assets/UI/Items/lucky-charm.png` | Нет | Да (Brass) |
+| `PingPong` | Ping Pong | `Assets/UI/Items/ping-pong.png` | Да (Rusty, Brass) | Да (Rusty) |
+| `Rock` | Rock | `Assets/UI/Items/rock.png` | Нет | Да (Rusty) |
+| `TennisBall` | Tennis Ball | `Assets/UI/Items/tennis-ball.png` | Да (Rusty, Brass) | Да (Rusty, Brass) |
+| `TicketPrize` | Ticket Prize | `Assets/UI/Items/ticket-prize.png` | Да (Rusty, Brass, Golden hidden) | Да (Brass, Golden) |
+| `WaterDroplet` | Water Droplet | `Assets/UI/Items/water-droplet.png` | Нет | Да (Rusty, Brass) |
+
+Отдельно:
+
+- `NoItem` (пустой слот) - иконка отсутствует (`Icon: {fileID: 0}`), это не перк.
+
 ## 10) Achievements - текущий статус
 
 Система ачивок оставлена в проекте, но сейчас фактически выключена:

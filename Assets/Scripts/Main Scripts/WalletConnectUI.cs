@@ -20,18 +20,46 @@ public class WalletConnectUI : MonoBehaviour
     bool isConnecting;
     string editorMockAddress;
 
+    [Header("Standalone Widget")]
+    [SerializeField]
+    bool BuildStandaloneWidget;
+
+    static WalletConnectUI _instance;
+    public static WalletConnectUI Instance
+    {
+        get
+        {
+            if (_instance != null) return _instance;
+            _instance = FindObjectOfType<WalletConnectUI>();
+            return _instance;
+        }
+    }
+
+    public bool IsConnected
+    {
+        get => !string.IsNullOrWhiteSpace(TryReadConnectedAddress());
+    }
+
+    public string ConnectedAddress => TryReadConnectedAddress();
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        if (FindObjectOfType<WalletConnectUI>() != null) return;
+        if (Instance != null) return;
 
         GameObject root = new GameObject(nameof(WalletConnectUI));
-        root.AddComponent<WalletConnectUI>();
+        _instance = root.AddComponent<WalletConnectUI>();
+    }
+
+    void Awake()
+    {
+        _instance = this;
     }
 
     void Start()
     {
-        BuildOrFindWidget();
+        if (BuildStandaloneWidget)
+            BuildOrFindWidget();
         RefreshConnectionStatus();
         UpdateMainMenuVisibility();
     }
@@ -152,6 +180,19 @@ public class WalletConnectUI : MonoBehaviour
         return statusObject;
     }
 
+    public void ConnectFromExternalUI()
+    {
+        OnConnectPressed();
+    }
+
+    public void ToggleConnectionFromExternalUI()
+    {
+        if (IsConnected)
+            _ = DisconnectWalletAsync();
+        else
+            OnConnectPressed();
+    }
+
     async void OnConnectPressed()
     {
         if (isConnecting) return;
@@ -182,6 +223,34 @@ public class WalletConnectUI : MonoBehaviour
         {
             isConnecting = false;
             SetButtonEnabled(true);
+            RefreshConnectionStatus();
+        }
+    }
+
+    async Task DisconnectWalletAsync()
+    {
+        if (isConnecting) return;
+        isConnecting = true;
+
+        try
+        {
+            bool disconnected = await TryDisconnectWallet();
+            if (!disconnected) return;
+
+            editorMockAddress = null;
+            SetStatus("Wallet: not connected");
+            SetButtonText("Connect Wallet");
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"WalletConnectUI: Wallet disconnect failed: {exception}");
+            SetStatus("Wallet: disconnect failed");
+        }
+        finally
+        {
+            isConnecting = false;
+            SetButtonEnabled(true);
+            RefreshConnectionStatus();
         }
     }
 
@@ -235,6 +304,54 @@ public class WalletConnectUI : MonoBehaviour
         try
         {
             invocationResult = loginMethod.Invoke(web3Instance, null);
+        }
+        catch (TargetInvocationException tie) when (tie.InnerException != null)
+        {
+            throw tie.InnerException;
+        }
+
+        await AwaitUnknownAsyncResult(invocationResult);
+        return true;
+    }
+
+    async Task<bool> TryDisconnectWallet()
+    {
+        if (!IsWalletAdapterSupportedRuntime())
+        {
+            #if UNITY_EDITOR
+            editorMockAddress = null;
+            return true;
+            #else
+            Debug.LogWarning("WalletConnectUI: Wallet adapter logout is only available on device runtime (Android/PSG1).");
+            return false;
+            #endif
+        }
+
+        Type web3Type = ResolveWeb3Type();
+        if (web3Type == null) return false;
+
+        object web3Instance = GetWeb3Instance(web3Type);
+        if (web3Instance == null) return false;
+
+        MethodInfo logoutMethod = FindMethod(web3Type, new[]
+        {
+            "LogoutWalletAdapter",
+            "LogoutWallet",
+            "DisconnectWallet",
+            "Disconnect",
+            "Logout"
+        });
+
+        if (logoutMethod == null)
+        {
+            Debug.LogWarning("WalletConnectUI: No wallet logout method found on Solana Web3 object.");
+            return false;
+        }
+
+        object invocationResult;
+        try
+        {
+            invocationResult = logoutMethod.Invoke(web3Instance, null);
         }
         catch (TargetInvocationException tie) when (tie.InnerException != null)
         {

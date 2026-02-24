@@ -67,6 +67,42 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "MenuLeft",
+                    "type": "Button",
+                    "id": "2e12f8fb-c494-4f15-9a2f-7ecf0c29ccf2",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "MenuRight",
+                    "type": "Button",
+                    "id": "7e4ff63f-a95d-4f9e-9abd-fad8838a1ca4",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "MenuSubmit",
+                    "type": "Button",
+                    "id": "db18cc56-a1d4-4d4f-b2fc-9a85bf0d8f53",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "MenuDailyDrop",
+                    "type": "Button",
+                    "id": "515601a8-20d0-4f8c-9e67-4eb9aa5f759f",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -221,6 +257,94 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "UseItem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6afaf3ea-6f1e-44d9-9de4-d5f2088a9fa1",
+                    "path": "<Gamepad>/dpad/left",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuLeft",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cf8f5dde-c19a-4fb4-bad0-c0be18f559a7",
+                    "path": "<PSG1>/dpad/left",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuLeft",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "11f174f6-5272-4cf5-a486-e126d8114d20",
+                    "path": "<Gamepad>/dpad/right",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuRight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b8ce6f26-6787-4d66-b8b4-c56f2e920f02",
+                    "path": "<PSG1>/dpad/right",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuRight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8fd440c7-242a-486f-a9f0-35561ffcd7ef",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuSubmit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6f2e2a36-2df0-4de2-b472-b40d90a69be8",
+                    "path": "<PSG1>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuSubmit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d70a934-72df-43b7-9b0c-5dd428f2e71e",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuDailyDrop",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "600b6e81-6f10-43f2-b1c9-c34930a212f7",
+                    "path": "<PSG1>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "MenuDailyDrop",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

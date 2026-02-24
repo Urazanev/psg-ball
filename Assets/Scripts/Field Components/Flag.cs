@@ -6,6 +6,8 @@ public class Flag : MonoBehaviour
 {
     void OnCollisionEnter(Collision c)
     {
-        GetComponent<AudioSource>().Play();
+        AudioSource speaker = GetComponent<AudioSource>();
+        if (!SoundCatalog.PlayNamed(speaker, "target_hit_light"))
+            speaker.Play();
     }
 }

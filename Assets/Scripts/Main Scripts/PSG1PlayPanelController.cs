@@ -18,10 +18,19 @@ public class PSG1PlayPanelController : MonoBehaviour
     const float PurchaseExtractDuration = 0.14f;
     const float PurchaseTransitDuration = 0.28f;
     const float SlotFlashDuration = 0.16f;
-    const float WalletButtonMinWidth = 260f;
+    const float WalletButtonMinWidth = 150f;
+    const float WalletButtonHeight = 139f;
     const float MainBackgroundLightenAlpha = 0.12f;
     const float ShopBackgroundLightenAlpha = 0.08f;
     const int ShopMainMenuFocusIndex = ShopCrateCount;
+
+    enum ButtonTextStyle
+    {
+        Default,
+        LightButton,
+        LaunchHeavy,
+        CounterDark
+    }
 
     readonly RectTransform[] shopCrateRects = new RectTransform[ShopCrateCount];
     readonly Button[] shopCrateButtons = new Button[ShopCrateCount];
@@ -67,6 +76,7 @@ public class PSG1PlayPanelController : MonoBehaviour
     GameObject utilityButtonsRoot;
     Sprite currencyBallSprite;
     Sprite panelBackgroundSprite;
+    Sprite bkgBackgroundSprite;
     Sprite plethBackgroundSprite;
     Sprite slotFrameEmptySprite;
     Sprite slotFrameSelectedSprite;
@@ -77,10 +87,15 @@ public class PSG1PlayPanelController : MonoBehaviour
     Sprite crateBrassSprite;
     Sprite crateGoldenSprite;
     Sprite orangeButtonSprite;
+    Sprite clearOrangeButtonSprite;
     Sprite blueButtonSprite;
     Sprite whiteButtonSprite;
+    Sprite walletButtonSprite;
     TMP_FontAsset toyCoreButtonFontAsset;
-    Material toyCoreButtonMaterialPreset;
+    Material toyCoreAccentButtonMaterialPreset;
+    Material toyCoreLightButtonMaterialPreset;
+    Material toyCoreLaunchButtonMaterialPreset;
+    Material toyCoreCounterMaterialPreset;
     bool initialized;
     bool toyCoreIconsApplied;
     int selectedCrate;
@@ -191,16 +206,12 @@ public class PSG1PlayPanelController : MonoBehaviour
         root = CreateRect(RootName, playPanel, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
 
         Image rootBackground = root.gameObject.AddComponent<Image>();
-        rootBackground.sprite = plethBackgroundSprite;
+        rootBackground.sprite = bkgBackgroundSprite != null
+            ? bkgBackgroundSprite
+            : (plethBackgroundSprite != null ? plethBackgroundSprite : panelBackgroundSprite);
         rootBackground.type = Image.Type.Simple;
         rootBackground.preserveAspect = false;
         rootBackground.color = Color.white;
-
-        RectTransform rootLightOverlay = CreateRect("Root_Background_Lighten", root, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-        Image rootLightOverlayImage = rootLightOverlay.gameObject.AddComponent<Image>();
-        rootLightOverlayImage.type = Image.Type.Simple;
-        rootLightOverlayImage.preserveAspect = false;
-        rootLightOverlayImage.color = new Color(1f, 1f, 1f, MainBackgroundLightenAlpha);
 
         BuildMainDisplay(root);
         BuildInventoryRow(root);
@@ -222,27 +233,28 @@ public class PSG1PlayPanelController : MonoBehaviour
         ballIconRect.sizeDelta = new Vector2(72f, 72f);
         ballIconRect.anchoredPosition = Vector2.zero;
 
-        ballCounterText = CreateLabel("TicketCount", ballCounter, "0", 48f, TextAlignmentOptions.Left);
+        ballCounterText = CreateLabel("TicketCount", ballCounter, "0", 42f, TextAlignmentOptions.Left);
+        ApplyToyCoreButtonTextStyle(ballCounterText, ButtonTextStyle.CounterDark);
         RectTransform counterTextRect = ballCounterText.rectTransform;
         counterTextRect.anchorMin = Vector2.zero;
         counterTextRect.anchorMax = Vector2.one;
         counterTextRect.offsetMin = new Vector2(92f, 0f);
         counterTextRect.offsetMax = Vector2.zero;
 
-        RectTransform walletRect = CreateRect("Wallet_Button", header, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(WalletButtonMinWidth, 94f));
+        RectTransform walletRect = CreateRect("Wallet_Button", header, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(WalletButtonMinWidth, WalletButtonHeight));
         LayoutElement walletLayout = walletRect.gameObject.AddComponent<LayoutElement>();
         walletLayout.minWidth = WalletButtonMinWidth;
         walletLayout.preferredWidth = WalletButtonMinWidth;
-        walletLayout.minHeight = 94f;
-        walletLayout.preferredHeight = 94f;
+        walletLayout.minHeight = WalletButtonHeight;
+        walletLayout.preferredHeight = WalletButtonHeight;
         walletButton = walletRect.gameObject.AddComponent<Button>();
         Image walletBg = walletRect.gameObject.AddComponent<Image>();
         walletButtonBackgroundImage = walletBg;
-        if (blueButtonSprite != null)
+        if (walletButtonSprite != null)
         {
-            walletBg.sprite = blueButtonSprite;
-            walletBg.type = Image.Type.Sliced;
-            walletBg.preserveAspect = false;
+            walletBg.sprite = walletButtonSprite;
+            walletBg.type = Image.Type.Simple;
+            walletBg.preserveAspect = true;
             walletBg.color = Color.white;
         }
         else
@@ -250,15 +262,16 @@ public class PSG1PlayPanelController : MonoBehaviour
             walletBg.color = new Color(0.93f, 0.94f, 0.96f, 1f);
         }
         Outline walletOutline = walletRect.gameObject.AddComponent<Outline>();
-        walletOutline.effectColor = blueButtonSprite != null ? new Color(0f, 0f, 0f, 0f) : new Color(0.77f, 0.8f, 0.86f, 1f);
+        walletOutline.effectColor = walletButtonSprite != null ? new Color(0f, 0f, 0f, 0f) : new Color(0.77f, 0.8f, 0.86f, 1f);
         walletOutline.effectDistance = new Vector2(2f, -2f);
 
-        walletText = CreateLabel("Wallet_Label", walletRect, "CONNECT", 28f, TextAlignmentOptions.Center);
-        ApplyToyCoreButtonTextStyle(walletText, autoSize: true, autoSizeMin: 10f, autoSizeMax: 20f);
+        walletText = CreateLabel("Wallet_Label", walletRect, "CONNECT", 16f, TextAlignmentOptions.Top);
+        ApplyToyCoreButtonTextStyle(walletText, ButtonTextStyle.CounterDark, autoSize: true, autoSizeMin: 8f, autoSizeMax: 16f);
+        walletText.color = new Color(0.12f, 0.27f, 0.44f, 1f);
         walletText.rectTransform.anchorMin = Vector2.zero;
         walletText.rectTransform.anchorMax = Vector2.one;
-        walletText.rectTransform.offsetMin = new Vector2(14f, 8f);
-        walletText.rectTransform.offsetMax = new Vector2(-14f, -8f);
+        walletText.rectTransform.offsetMin = new Vector2(12f, 68f);
+        walletText.rectTransform.offsetMax = new Vector2(-12f, -25f);
 
         walletButton.transition = Selectable.Transition.None;
         walletButton.onClick.AddListener(OnWalletPressed);
@@ -268,16 +281,10 @@ public class PSG1PlayPanelController : MonoBehaviour
     {
         shopPanel = CreateRect("Shop_Overlay_Panel", parent, new Vector2(0.05f, 0.18f), new Vector2(0.95f, 0.76f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
         Image panelImage = shopPanel.gameObject.AddComponent<Image>();
-        panelImage.sprite = plethBackgroundSprite != null ? plethBackgroundSprite : panelBackgroundSprite;
+        panelImage.sprite = null;
         panelImage.type = Image.Type.Simple;
         panelImage.preserveAspect = false;
-        panelImage.color = new Color(1f, 1f, 1f, 0.98f);
-
-        RectTransform panelLightOverlay = CreateRect("Shop_Background_Lighten", shopPanel, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-        Image panelLightOverlayImage = panelLightOverlay.gameObject.AddComponent<Image>();
-        panelLightOverlayImage.type = Image.Type.Simple;
-        panelLightOverlayImage.preserveAspect = false;
-        panelLightOverlayImage.color = new Color(1f, 1f, 1f, ShopBackgroundLightenAlpha);
+        panelImage.color = new Color(1f, 1f, 1f, 0f);
         Outline panelOutline = shopPanel.gameObject.AddComponent<Outline>();
         panelOutline.effectColor = new Color(0f, 0f, 0f, 0f);
         panelOutline.effectDistance = new Vector2(2f, -2f);
@@ -298,10 +305,10 @@ public class PSG1PlayPanelController : MonoBehaviour
 
         RectTransform shopRow = CreateRect("ShopRow", content, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0f, 366f));
         LayoutElement shopRowLayout = shopRow.gameObject.AddComponent<LayoutElement>();
-        shopRowLayout.preferredHeight = 366f;
+        shopRowLayout.preferredHeight = 418f;
 
         HorizontalLayoutGroup shopLayout = shopRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        shopLayout.spacing = 30f;
+        shopLayout.spacing = 18f;
         shopLayout.padding = new RectOffset(4, 4, 0, 0);
         shopLayout.childAlignment = TextAnchor.MiddleCenter;
         shopLayout.childControlWidth = false;
@@ -312,10 +319,10 @@ public class PSG1PlayPanelController : MonoBehaviour
         for (int i = 0; i < ShopCrateCount; i++)
         {
             int capturedIndex = i;
-            RectTransform crate = CreateRect($"Shop_Crate_{i + 1}", shopRow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(430f, 352f));
+            RectTransform crate = CreateRect($"Shop_Crate_{i + 1}", shopRow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(516f, 402f));
             LayoutElement crateLayout = crate.gameObject.AddComponent<LayoutElement>();
-            crateLayout.preferredWidth = 430f;
-            crateLayout.preferredHeight = 352f;
+            crateLayout.preferredWidth = 516f;
+            crateLayout.preferredHeight = 402f;
 
             Image frame = crate.gameObject.AddComponent<Image>();
             frame.color = new Color(1f, 1f, 1f, 0f);
@@ -326,72 +333,42 @@ public class PSG1PlayPanelController : MonoBehaviour
             CanvasGroup crateCanvasGroup = crate.gameObject.AddComponent<CanvasGroup>();
 
             VerticalLayoutGroup cardLayout = crate.gameObject.AddComponent<VerticalLayoutGroup>();
-            cardLayout.spacing = 10f;
-            cardLayout.padding = new RectOffset(14, 14, 14, 14);
+            cardLayout.spacing = 12f;
+            cardLayout.padding = new RectOffset(10, 10, 8, 8);
             cardLayout.childAlignment = TextAnchor.UpperCenter;
             cardLayout.childControlWidth = true;
             cardLayout.childControlHeight = false;
             cardLayout.childForceExpandWidth = true;
             cardLayout.childForceExpandHeight = false;
 
-            RectTransform iconZone = CreateRect("Card_Icon_Zone", crate, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0f, 142f));
+            RectTransform iconZone = CreateRect("Card_Icon_Zone", crate, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0f, 300f));
             LayoutElement iconZoneLayout = iconZone.gameObject.AddComponent<LayoutElement>();
-            iconZoneLayout.preferredHeight = 142f;
+            iconZoneLayout.preferredHeight = 300f;
 
             Image icon = CreateImage("Crate_Icon", iconZone, GetCrateSpriteForIndex(i));
             icon.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             icon.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            icon.rectTransform.sizeDelta = new Vector2(150f, 150f);
+            icon.rectTransform.sizeDelta = new Vector2(500f, 267f);
 
-            RectTransform infoPlate = CreateRect("Card_Info", crate, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(402f, 120f));
-            LayoutElement infoLayout = infoPlate.gameObject.AddComponent<LayoutElement>();
-            infoLayout.preferredHeight = 120f;
-            Image infoBg = infoPlate.gameObject.AddComponent<Image>();
-            infoBg.color = new Color(1f, 1f, 1f, 0.88f);
-
-            VerticalLayoutGroup infoGroup = infoPlate.gameObject.AddComponent<VerticalLayoutGroup>();
-            infoGroup.spacing = 4f;
-            infoGroup.padding = new RectOffset(12, 12, 8, 8);
-            infoGroup.childAlignment = TextAnchor.UpperCenter;
-            infoGroup.childControlWidth = true;
-            infoGroup.childControlHeight = false;
-            infoGroup.childForceExpandWidth = true;
-            infoGroup.childForceExpandHeight = false;
-
-            TMP_Text titleLabel = CreateLabel("Card_Title", infoPlate, GetCrateTitle(i), 25f, TextAlignmentOptions.Center);
-            LayoutElement titleLayout = titleLabel.gameObject.AddComponent<LayoutElement>();
-            titleLayout.preferredHeight = 30f;
-            titleLabel.enableWordWrapping = false;
-
-            RectTransform perkRows = CreateRect("Card_Perk_Rows", infoPlate, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            LayoutElement perkRowsLayout = perkRows.gameObject.AddComponent<LayoutElement>();
-            perkRowsLayout.preferredHeight = 74f;
-            VerticalLayoutGroup perkLayout = perkRows.gameObject.AddComponent<VerticalLayoutGroup>();
-            perkLayout.spacing = 2f;
-            perkLayout.padding = new RectOffset(0, 0, 0, 0);
-            perkLayout.childAlignment = TextAnchor.UpperLeft;
-            perkLayout.childControlWidth = true;
-            perkLayout.childControlHeight = false;
-            perkLayout.childForceExpandWidth = true;
-            perkLayout.childForceExpandHeight = false;
-            BuildCratePerkRows(perkRows, i);
-
-            RectTransform buyRect = CreateRect("Buy_Button", crate, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(320f, 62f));
+            RectTransform buyRect = CreateRect("Buy_Button", crate, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(340f, 82f));
             LayoutElement buyLayout = buyRect.gameObject.AddComponent<LayoutElement>();
-            buyLayout.preferredHeight = 62f;
+            buyLayout.preferredHeight = 82f;
             Image buyBg = buyRect.gameObject.AddComponent<Image>();
-            buyBg.sprite = launchButtonCleanSprite != null ? launchButtonCleanSprite : launchSprite;
+            buyBg.sprite = clearOrangeButtonSprite != null
+                ? clearOrangeButtonSprite
+                : (launchButtonCleanSprite != null ? launchButtonCleanSprite : launchSprite);
             buyBg.type = Image.Type.Simple;
-            buyBg.preserveAspect = false;
+            buyBg.preserveAspect = true;
             buyBg.color = Color.white;
             Outline buyOutline = buyRect.gameObject.AddComponent<Outline>();
-            buyOutline.effectColor = new Color(0.78f, 0.5f, 0.1f, 0.9f);
-            buyOutline.effectDistance = new Vector2(1f, -2f);
+            buyOutline.effectColor = new Color(0f, 0f, 0f, 0f);
+            buyOutline.effectDistance = Vector2.zero;
             Button buyButton = buyRect.gameObject.AddComponent<Button>();
+            buyButton.transition = Selectable.Transition.None;
             buyButton.onClick.AddListener(() => OnShopCratePressed(capturedIndex));
 
-            TMP_Text buyLabel = CreateLabel("Buy_Label", buyRect, $"BUY - {GetCratePrice(i)} Balls", 24f, TextAlignmentOptions.Center);
+            TMP_Text buyLabel = CreateLabel("Buy_Label", buyRect, GetBuyButtonLabel(i), 24f, TextAlignmentOptions.Center);
             ApplyToyCoreButtonTextStyle(buyLabel);
             buyLabel.color = Color.white;
             buyLabel.rectTransform.offsetMin = Vector2.zero;
@@ -434,8 +411,8 @@ public class PSG1PlayPanelController : MonoBehaviour
             badge.rectTransform.anchoredPosition = new Vector2(24f, 0f);
         }
 
-        shopCloseText = CreateLabel("Shop_MainMenu_Label", shopCloseRect, "MAIN MENU", 34f, TextAlignmentOptions.Center);
-        ApplyToyCoreButtonTextStyle(shopCloseText);
+        shopCloseText = CreateLabel("Shop_MainMenu_Label", shopCloseRect, "MAIN MENU", 32f, TextAlignmentOptions.Center);
+        ApplyToyCoreButtonTextStyle(shopCloseText, ButtonTextStyle.LightButton);
         shopCloseText.color = Color.white;
         shopCloseText.rectTransform.anchorMin = Vector2.zero;
         shopCloseText.rectTransform.anchorMax = Vector2.one;
@@ -446,71 +423,42 @@ public class PSG1PlayPanelController : MonoBehaviour
 
     void BuildInventoryRow(RectTransform parent)
     {
-        RectTransform inventoryTray = CreateRect("Inventory_Dock", parent, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -158f), new Vector2(760f, 156f));
-        Image trayBackground = inventoryTray.gameObject.AddComponent<Image>();
-        trayBackground.sprite = panelBackgroundSprite;
-        trayBackground.type = Image.Type.Simple;
-        trayBackground.preserveAspect = false;
-        trayBackground.color = new Color(0.92f, 0.96f, 1f, 0.78f);
-        Outline trayOutline = inventoryTray.gameObject.AddComponent<Outline>();
-        trayOutline.effectColor = new Color(0.67f, 0.76f, 0.9f, 0.86f);
-        trayOutline.effectDistance = new Vector2(2f, -2f);
+        queueFullBadgeRoot = null;
+        queueFullText = null;
 
-        RectTransform queueBadgeRect = CreateRect("Queue_Full_Badge", inventoryTray, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(410f, 46f));
-        queueFullBadgeRoot = queueBadgeRect.gameObject;
-        Image queueBadgeBg = queueBadgeRect.gameObject.AddComponent<Image>();
-        queueBadgeBg.color = queueFullFrameColor;
-        Outline queueBadgeOutline = queueBadgeRect.gameObject.AddComponent<Outline>();
-        queueBadgeOutline.effectColor = new Color(0.93f, 0.78f, 0.28f, 0.95f);
-        queueBadgeOutline.effectDistance = new Vector2(2f, -2f);
-        queueFullText = CreateLabel("Queue_Full_Label", queueBadgeRect, "QUEUE FULL", 27f, TextAlignmentOptions.Center);
-        queueFullText.color = queueFullColor;
-        queueFullBadgeRoot.SetActive(false);
+        RectTransform inventoryRow = CreateRect(
+            "InventoryRow",
+            parent,
+            new Vector2(0.5f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(0f, -158f),
+            new Vector2(560f, 120f));
 
-        RectTransform inventoryRow = CreateRect("InventoryRow", inventoryTray, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-56f, -36f));
-        HorizontalLayoutGroup inventoryLayout = inventoryRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        inventoryLayout.spacing = 18f;
-        inventoryLayout.padding = new RectOffset(24, 24, 0, 0);
-        inventoryLayout.childAlignment = TextAnchor.MiddleCenter;
-        inventoryLayout.childControlWidth = false;
-        inventoryLayout.childControlHeight = false;
-        inventoryLayout.childForceExpandWidth = false;
-        inventoryLayout.childForceExpandHeight = false;
+        float[] slotOffsetsX = { -188f, 6f, 190f };
+        const float slotOffsetY = 34f;
 
         for (int i = 0; i < InventorySlotCount; i++)
         {
-            RectTransform inventorySlot = CreateRect($"Slot_Circle_Empty_{i + 1}", inventoryRow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(128f, 128f));
-            LayoutElement slotLayout = inventorySlot.gameObject.AddComponent<LayoutElement>();
-            slotLayout.preferredWidth = 128f;
-            slotLayout.preferredHeight = 128f;
-
-            Image frame = inventorySlot.gameObject.AddComponent<Image>();
-            frame.sprite = slotFrameEmptySprite;
-            frame.type = Image.Type.Simple;
-            frame.preserveAspect = true;
-            if (frame.sprite == null)
-                frame.color = new Color(0.75f, 0.78f, 0.84f, 1f);
-            else
-                frame.color = new Color(0.94f, 0.97f, 1f, 0.95f);
-
-            Image glow = CreateImage("Inventory_Glow", inventorySlot, slotFrameSelectedSprite != null ? slotFrameSelectedSprite : slotFrameEmptySprite);
-            glow.rectTransform.offsetMin = new Vector2(10f, 10f);
-            glow.rectTransform.offsetMax = new Vector2(-10f, -10f);
-            glow.color = new Color(0.42f, 0.84f, 1f, 0f);
-            glow.enabled = false;
+            float x = i < slotOffsetsX.Length ? slotOffsetsX[i] : (i - 1) * 178f;
+            RectTransform inventorySlot = CreateRect(
+                $"Slot_Icon_{i + 1}",
+                inventoryRow,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(x, slotOffsetY),
+                new Vector2(150f, 150f));
 
             Image icon = CreateImage("Inventory_Icon", inventorySlot, null);
             icon.rectTransform.anchorMin = Vector2.zero;
             icon.rectTransform.anchorMax = Vector2.one;
-            icon.rectTransform.offsetMin = new Vector2(18f, 18f);
-            icon.rectTransform.offsetMax = new Vector2(-18f, -18f);
-            Shadow iconShadow = icon.gameObject.AddComponent<Shadow>();
-            iconShadow.effectColor = new Color(0f, 0f, 0f, 0.35f);
-            iconShadow.effectDistance = new Vector2(2f, -2f);
+            icon.rectTransform.offsetMin = new Vector2(1f, 1f);
+            icon.rectTransform.offsetMax = new Vector2(-1f, -1f);
             icon.enabled = false;
 
-            inventorySlotFrameImages[i] = frame;
-            inventorySlotGlowImages[i] = glow;
+            inventorySlotFrameImages[i] = null;
+            inventorySlotGlowImages[i] = null;
             inventorySlotIconImages[i] = icon;
         }
     }
@@ -518,21 +466,31 @@ public class PSG1PlayPanelController : MonoBehaviour
     void BuildDailyRewardZone(RectTransform parent)
     {
         const float buttonWidth = 760f;
-        const float buttonHeight = 102f;
-        const float launchToShopGap = 24f;
-        const float shopToClaimGap = 12f;
+        const float launchButtonHeight = 170f;
+        const float secondaryButtonHeight = 126f;
+        const float launchToShopGap = 26f;
+        const float shopToClaimGap = 14f;
+        float actionZoneHeight = launchButtonHeight + launchToShopGap + secondaryButtonHeight + shopToClaimGap + secondaryButtonHeight;
 
-        RectTransform zone = CreateRect("Action_Zone", parent, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 300f), new Vector2(buttonWidth, 342f));
+        RectTransform zone = CreateRect("Action_Zone", parent, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 205f), new Vector2(buttonWidth, actionZoneHeight));
         actionZoneRoot = zone.gameObject;
 
-        RectTransform launchRect = CreateRect("LAUNCH_BUTTON", zone, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(buttonWidth, buttonHeight));
+        float launchButtonWidth = buttonWidth;
+        if (orangeButtonSprite != null)
+        {
+            float aspect = orangeButtonSprite.rect.width / Mathf.Max(1f, orangeButtonSprite.rect.height);
+            launchButtonWidth = Mathf.Round(aspect * launchButtonHeight);
+        }
+        float secondaryButtonWidth = Mathf.Clamp(launchButtonWidth - 18f, 600f, buttonWidth);
+
+        RectTransform launchRect = CreateRect("LAUNCH_BUTTON", zone, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(launchButtonWidth, launchButtonHeight));
         launchButtonRoot = launchRect.gameObject;
 
         Image launchImage = launchRect.gameObject.AddComponent<Image>();
         launchButtonBackgroundImage = launchImage;
         launchImage.sprite = orangeButtonSprite != null ? orangeButtonSprite : launchSprite;
-        launchImage.type = orangeButtonSprite != null ? Image.Type.Sliced : Image.Type.Simple;
-        launchImage.preserveAspect = false;
+        launchImage.type = Image.Type.Simple;
+        launchImage.preserveAspect = orangeButtonSprite != null;
         if (orangeButtonSprite == null && launchSprite == null)
             launchImage.color = new Color(0.97f, 0.66f, 0.15f, 1f);
         else
@@ -542,10 +500,10 @@ public class PSG1PlayPanelController : MonoBehaviour
         launchButton.transition = Selectable.Transition.None;
         launchButton.onClick.AddListener(OnLaunchPressed);
 
-        if (orangeButtonSprite != null || launchSprite == null)
+        if (orangeButtonSprite == null && launchSprite == null)
         {
             TMP_Text launchLabel = CreateLabel("Launch_Label", launchRect, "LAUNCH", 52f, TextAlignmentOptions.Center);
-            ApplyToyCoreButtonTextStyle(launchLabel);
+            ApplyToyCoreButtonTextStyle(launchLabel, ButtonTextStyle.LaunchHeavy);
             launchLabel.color = Color.white;
             launchLabel.rectTransform.anchorMin = Vector2.zero;
             launchLabel.rectTransform.anchorMax = Vector2.one;
@@ -559,8 +517,8 @@ public class PSG1PlayPanelController : MonoBehaviour
             new Vector2(0.5f, 1f),
             new Vector2(0.5f, 1f),
             new Vector2(0.5f, 1f),
-            new Vector2(0f, -(buttonHeight + launchToShopGap)),
-            new Vector2(buttonWidth, buttonHeight));
+            new Vector2(0f, -(launchButtonHeight + launchToShopGap)),
+            new Vector2(secondaryButtonWidth, secondaryButtonHeight));
         dailyDropButton = shopButtonRect.gameObject.AddComponent<Button>();
         Image shopBg = shopButtonRect.gameObject.AddComponent<Image>();
         shopButtonBackgroundImage = shopBg;
@@ -582,22 +540,12 @@ public class PSG1PlayPanelController : MonoBehaviour
         shopOutline.effectDistance = new Vector2(2f, -3f);
         dailyDropButton.transition = Selectable.Transition.None;
 
-        if (dailyDropBadgeSprite != null)
-        {
-            Image badge = CreateImage("Shop_Badge", shopButtonRect, dailyDropBadgeSprite);
-            badge.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-            badge.rectTransform.anchorMax = new Vector2(0f, 0.5f);
-            badge.rectTransform.pivot = new Vector2(0f, 0.5f);
-            badge.rectTransform.sizeDelta = new Vector2(72f, 72f);
-            badge.rectTransform.anchoredPosition = new Vector2(24f, 0f);
-        }
-
-        dailyDropText = CreateLabel("Shop_Label", shopButtonRect, "SHOP", 34f, TextAlignmentOptions.Center);
-        ApplyToyCoreButtonTextStyle(dailyDropText);
+        dailyDropText = CreateLabel("Shop_Label", shopButtonRect, "SHOP", 32f, TextAlignmentOptions.Center);
+        ApplyToyCoreButtonTextStyle(dailyDropText, ButtonTextStyle.LightButton);
         dailyDropText.color = Color.white;
         dailyDropText.rectTransform.anchorMin = Vector2.zero;
         dailyDropText.rectTransform.anchorMax = Vector2.one;
-        dailyDropText.rectTransform.offsetMin = dailyDropBadgeSprite != null ? new Vector2(96f, 0f) : Vector2.zero;
+        dailyDropText.rectTransform.offsetMin = Vector2.zero;
         dailyDropText.rectTransform.offsetMax = Vector2.zero;
         dailyDropButton.onClick.AddListener(OnShopTriggerPressed);
 
@@ -607,8 +555,8 @@ public class PSG1PlayPanelController : MonoBehaviour
             new Vector2(0.5f, 1f),
             new Vector2(0.5f, 1f),
             new Vector2(0.5f, 1f),
-            new Vector2(0f, -(buttonHeight + launchToShopGap + buttonHeight + shopToClaimGap)),
-            new Vector2(buttonWidth, buttonHeight));
+            new Vector2(0f, -(launchButtonHeight + launchToShopGap + secondaryButtonHeight + shopToClaimGap)),
+            new Vector2(secondaryButtonWidth, secondaryButtonHeight));
         dailyClaimButton = dailyClaimRect.gameObject.AddComponent<Button>();
         Image claimBg = dailyClaimRect.gameObject.AddComponent<Image>();
         dailyClaimButtonBackgroundImage = claimBg;
@@ -628,21 +576,11 @@ public class PSG1PlayPanelController : MonoBehaviour
         claimOutline.effectDistance = new Vector2(2f, -2f);
         dailyClaimButton.transition = Selectable.Transition.None;
 
-        if (dailyDropBadgeSprite != null)
-        {
-            Image badge = CreateImage("Daily_Claim_Badge", dailyClaimRect, dailyDropBadgeSprite);
-            badge.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-            badge.rectTransform.anchorMax = new Vector2(0f, 0.5f);
-            badge.rectTransform.pivot = new Vector2(0f, 0.5f);
-            badge.rectTransform.sizeDelta = new Vector2(72f, 72f);
-            badge.rectTransform.anchoredPosition = new Vector2(24f, 0f);
-        }
-
-        dailyClaimText = CreateLabel("Daily_Claim_Label", dailyClaimRect, "DAILY CLAIM", 30f, TextAlignmentOptions.Center);
-        ApplyToyCoreButtonTextStyle(dailyClaimText);
+        dailyClaimText = CreateLabel("Daily_Claim_Label", dailyClaimRect, "DAILY CLAIM", 32f, TextAlignmentOptions.Center);
+        ApplyToyCoreButtonTextStyle(dailyClaimText, ButtonTextStyle.LightButton);
         dailyClaimText.rectTransform.anchorMin = Vector2.zero;
         dailyClaimText.rectTransform.anchorMax = Vector2.one;
-        dailyClaimText.rectTransform.offsetMin = dailyDropBadgeSprite != null ? new Vector2(96f, 0f) : Vector2.zero;
+        dailyClaimText.rectTransform.offsetMin = Vector2.zero;
         dailyClaimText.rectTransform.offsetMax = Vector2.zero;
         dailyClaimButton.onClick.AddListener(OnDailyClaimPressed);
     }
@@ -660,8 +598,10 @@ public class PSG1PlayPanelController : MonoBehaviour
         utilityLayout.childForceExpandWidth = false;
         utilityLayout.childForceExpandHeight = false;
 
-        CreateUtilityButton(utilityRow, "Reset_Perks_Button", "Reset Perks", OnResetPerksPressed, 260f);
-        CreateUtilityButton(utilityRow, "Add_Balls_Button", "+100 Balls", OnAddBallsPressed, 240f);
+        Button resetPerksButton = CreateUtilityButton(utilityRow, "Reset_Perks_Button", "Reset Perks", OnResetPerksPressed, 260f);
+        Button addBallsButton = CreateUtilityButton(utilityRow, "Add_Balls_Button", "+100 Balls", OnAddBallsPressed, 240f);
+        ApplyStyleToButtonLabel(resetPerksButton, ButtonTextStyle.CounterDark, 22f);
+        ApplyStyleToButtonLabel(addBallsButton, ButtonTextStyle.CounterDark, 22f);
     }
 
     void HideLegacyMenu(GameObject playPanelRoot)
@@ -932,16 +872,16 @@ public class PSG1PlayPanelController : MonoBehaviour
             if (shopCrateButtons[i] != null)
                 shopCrateButtons[i].interactable = canPurchase;
             if (shopCrateCanvasGroups[i] != null)
-                shopCrateCanvasGroups[i].alpha = canPurchase ? 1f : 0.7f;
+                shopCrateCanvasGroups[i].alpha = 1f;
             if (shopCrateBuyButtonImages[i] != null)
-                shopCrateBuyButtonImages[i].color = canPurchase ? Color.white : new Color(0.56f, 0.56f, 0.56f, 1f);
+                shopCrateBuyButtonImages[i].color = Color.white;
 
             icon.enabled = true;
             icon.sprite = GetCrateSpriteForIndex(i);
-            icon.color = canPurchase ? Color.white : disabledIconColor;
+            icon.color = Color.white;
 
-            label.text = $"BUY - {GetCratePrice(i)} Balls";
-            label.color = canPurchase ? Color.white : new Color(0.82f, 0.82f, 0.82f, 1f);
+            label.text = GetBuyButtonLabel(i);
+            label.color = Color.white;
         }
     }
 
@@ -991,17 +931,25 @@ public class PSG1PlayPanelController : MonoBehaviour
 
         if (walletButtonBackgroundImage != null)
         {
-            Sprite walletButtonSprite = connected ? whiteButtonSprite : blueButtonSprite;
-            if (walletButtonSprite != null)
+            Sprite walletBackgroundSprite = walletButtonSprite != null ? walletButtonSprite : blueButtonSprite;
+            if (walletBackgroundSprite != null)
             {
-                walletButtonBackgroundImage.sprite = walletButtonSprite;
-                walletButtonBackgroundImage.type = Image.Type.Sliced;
-                walletButtonBackgroundImage.preserveAspect = false;
+                walletButtonBackgroundImage.sprite = walletBackgroundSprite;
+                walletButtonBackgroundImage.type = walletButtonSprite != null ? Image.Type.Simple : Image.Type.Sliced;
+                walletButtonBackgroundImage.preserveAspect = walletButtonSprite != null;
                 walletButtonBackgroundImage.color = Color.white;
             }
         }
         if (walletText != null)
-            walletText.text = connected ? "CONNECTED" : "CONNECT";
+        {
+            string connectedAddress = walletUi != null ? walletUi.ConnectedAddress : null;
+            walletText.text = connected
+                ? FormatWalletButtonLabel(connectedAddress)
+                : "CONNECT";
+            walletText.fontSizeMax = connected ? 12f : 16f;
+            walletText.fontSizeMin = connected ? 6f : 8f;
+            walletText.color = connected ? new Color(0.09f, 0.25f, 0.42f, 1f) : new Color(0.12f, 0.27f, 0.44f, 1f);
+        }
 
         if (dailyDropButton != null && dailyDropText != null)
         {
@@ -1028,6 +976,19 @@ public class PSG1PlayPanelController : MonoBehaviour
         bool alreadyClaimed = PlayerPrefs.GetString(DailyClaimKey, string.Empty) == today;
         dailyClaimButton.interactable = !alreadyClaimed;
         dailyClaimText.text = alreadyClaimed ? "CLAIMED TODAY" : "GET DAILY +10";
+    }
+
+    static string FormatWalletButtonLabel(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return "CONNECTED";
+
+        const int prefixLength = 2;
+        const int suffixLength = 4;
+        if (address.Length <= prefixLength + suffixLength + 3)
+            return address;
+
+        return $"{address.Substring(0, prefixLength)}...{address.Substring(address.Length - suffixLength)}";
     }
 
     void RefreshLaunchButtonState()
@@ -1071,7 +1032,11 @@ public class PSG1PlayPanelController : MonoBehaviour
 
     void EnsureToyCoreButtonTextStyleAssets()
     {
-        if (toyCoreButtonMaterialPreset != null && toyCoreButtonFontAsset != null)
+        if (toyCoreAccentButtonMaterialPreset != null &&
+            toyCoreLightButtonMaterialPreset != null &&
+            toyCoreLaunchButtonMaterialPreset != null &&
+            toyCoreCounterMaterialPreset != null &&
+            toyCoreButtonFontAsset != null)
             return;
 
         if (toyCoreButtonFontAsset == null)
@@ -1091,9 +1056,73 @@ public class PSG1PlayPanelController : MonoBehaviour
         if (toyCoreButtonFontAsset == null || toyCoreButtonFontAsset.material == null)
             return;
 
-        toyCoreButtonMaterialPreset = new Material(toyCoreButtonFontAsset.material);
-        toyCoreButtonMaterialPreset.name = "ToyCore_Button3D_Runtime";
-        ConfigureToyCoreButtonMaterial(toyCoreButtonMaterialPreset);
+        if (toyCoreAccentButtonMaterialPreset == null)
+        {
+            toyCoreAccentButtonMaterialPreset = new Material(toyCoreButtonFontAsset.material);
+            toyCoreAccentButtonMaterialPreset.name = "ToyCore_Button3D_Accent_Runtime";
+            ConfigureToyCoreButtonMaterial(
+                toyCoreAccentButtonMaterialPreset,
+                faceColor: Color.white,
+                faceDilate: 0.18f,
+                underlayColor: new Color(0.18f, 0.2f, 0.28f, 0.68f),
+                underlayOffsetX: 3f,
+                underlayOffsetY: -3f,
+                underlayDilate: 0.2f,
+                underlaySoftness: 0.3f,
+                bevelAmount: 0.3f,
+                bevelSoftness: 0.45f);
+        }
+
+        if (toyCoreLightButtonMaterialPreset == null)
+        {
+            toyCoreLightButtonMaterialPreset = new Material(toyCoreButtonFontAsset.material);
+            toyCoreLightButtonMaterialPreset.name = "ToyCore_Button3D_LightContrast_Runtime";
+            ConfigureToyCoreButtonMaterial(
+                toyCoreLightButtonMaterialPreset,
+                faceColor: new Color32(85, 85, 85, 255), // #555555
+                faceDilate: 0.32f,
+                underlayColor: new Color(0.2f, 0.2f, 0.33f, 0.62f),
+                underlayOffsetX: 2f,
+                underlayOffsetY: -2f,
+                underlayDilate: 0.2f,
+                underlaySoftness: 0.3f,
+                bevelAmount: 0.3f,
+                bevelSoftness: 0.4f);
+        }
+
+        if (toyCoreLaunchButtonMaterialPreset == null)
+        {
+            toyCoreLaunchButtonMaterialPreset = new Material(toyCoreButtonFontAsset.material);
+            toyCoreLaunchButtonMaterialPreset.name = "ToyCore_Button3D_LaunchHeavy_Runtime";
+            ConfigureToyCoreButtonMaterial(
+                toyCoreLaunchButtonMaterialPreset,
+                faceColor: Color.white,
+                faceDilate: 0.2f,
+                underlayColor: new Color(0.2f, 0.16f, 0.11f, 0.62f),
+                underlayOffsetX: 3f,
+                underlayOffsetY: -3f,
+                underlayDilate: 0.2f,
+                underlaySoftness: 0.3f,
+                bevelAmount: 0.3f,
+                bevelSoftness: 0.45f);
+        }
+
+        if (toyCoreCounterMaterialPreset == null)
+        {
+            toyCoreCounterMaterialPreset = new Material(toyCoreButtonFontAsset.material);
+            toyCoreCounterMaterialPreset.name = "ToyCore_Button3D_Counter_Runtime";
+            ConfigureToyCoreButtonMaterial(
+                toyCoreCounterMaterialPreset,
+                faceColor: new Color32(51, 51, 51, 255), // #333333
+                faceDilate: 0.25f,
+                underlayColor: new Color(0f, 0f, 0f, 0.35f),
+                underlayOffsetX: 2f,
+                underlayOffsetY: -2f,
+                underlayDilate: 0.16f,
+                underlaySoftness: 0.2f,
+                bevelAmount: 0.3f,
+                bevelSoftness: 0.45f);
+        }
     }
 
     static TMP_FontAsset TryCreateRuntimeFontAsset(Font sourceFont)
@@ -1136,7 +1165,17 @@ public class PSG1PlayPanelController : MonoBehaviour
         return null;
     }
 
-    static void ConfigureToyCoreButtonMaterial(Material material)
+    static void ConfigureToyCoreButtonMaterial(
+        Material material,
+        Color faceColor,
+        float faceDilate,
+        Color underlayColor,
+        float underlayOffsetX,
+        float underlayOffsetY,
+        float underlayDilate,
+        float underlaySoftness,
+        float bevelAmount,
+        float bevelSoftness)
     {
         if (material == null) return;
 
@@ -1144,43 +1183,50 @@ public class PSG1PlayPanelController : MonoBehaviour
         material.EnableKeyword("UNDERLAY_ON");
 
         if (material.HasProperty("_FaceColor"))
-            material.SetColor("_FaceColor", Color.white);
+            material.SetColor("_FaceColor", faceColor);
+        if (material.HasProperty("_FaceDilate"))
+            material.SetFloat("_FaceDilate", faceDilate);
 
         if (material.HasProperty("_Bevel"))
-            material.SetFloat("_Bevel", 0.2f);
+            material.SetFloat("_Bevel", bevelAmount);
         if (material.HasProperty("_BevelWidth"))
-            material.SetFloat("_BevelWidth", 0.22f);
+            material.SetFloat("_BevelWidth", bevelAmount);
         if (material.HasProperty("_BevelRoundness"))
-            material.SetFloat("_BevelRoundness", 0.3f);
+            material.SetFloat("_BevelRoundness", bevelSoftness);
         if (material.HasProperty("_BevelOffset"))
-            material.SetFloat("_BevelOffset", 0.05f);
+            material.SetFloat("_BevelOffset", 0f);
         if (material.HasProperty("_BevelClamp"))
             material.SetFloat("_BevelClamp", 0f);
 
         if (material.HasProperty("_LightAngle"))
             material.SetFloat("_LightAngle", Mathf.PI * 0.5f);
         if (material.HasProperty("_SpecularColor"))
-            material.SetColor("_SpecularColor", new Color(1f, 1f, 1f, 0.9f));
+            material.SetColor("_SpecularColor", new Color(1f, 1f, 1f, 0.82f));
         if (material.HasProperty("_SpecularPower"))
-            material.SetFloat("_SpecularPower", 1.7f);
+            material.SetFloat("_SpecularPower", 1.45f);
         if (material.HasProperty("_Diffuse"))
-            material.SetFloat("_Diffuse", 0.55f);
+            material.SetFloat("_Diffuse", 0.52f);
         if (material.HasProperty("_Ambient"))
-            material.SetFloat("_Ambient", 0.45f);
+            material.SetFloat("_Ambient", 0.46f);
 
         if (material.HasProperty("_UnderlayColor"))
-            material.SetColor("_UnderlayColor", new Color(0f, 0f, 0f, 0.34f));
+            material.SetColor("_UnderlayColor", underlayColor);
         if (material.HasProperty("_UnderlayOffsetX"))
-            material.SetFloat("_UnderlayOffsetX", 1f);
+            material.SetFloat("_UnderlayOffsetX", underlayOffsetX);
         if (material.HasProperty("_UnderlayOffsetY"))
-            material.SetFloat("_UnderlayOffsetY", -1f);
+            material.SetFloat("_UnderlayOffsetY", underlayOffsetY);
         if (material.HasProperty("_UnderlayDilate"))
-            material.SetFloat("_UnderlayDilate", 0.1f);
+            material.SetFloat("_UnderlayDilate", underlayDilate);
         if (material.HasProperty("_UnderlaySoftness"))
-            material.SetFloat("_UnderlaySoftness", 0.5f);
+            material.SetFloat("_UnderlaySoftness", underlaySoftness);
     }
 
-    void ApplyToyCoreButtonTextStyle(TMP_Text label, bool autoSize = false, float autoSizeMin = 14f, float autoSizeMax = 40f)
+    void ApplyToyCoreButtonTextStyle(
+        TMP_Text label,
+        ButtonTextStyle style = ButtonTextStyle.Default,
+        bool autoSize = false,
+        float autoSizeMin = 14f,
+        float autoSizeMax = 40f)
     {
         if (label == null) return;
 
@@ -1188,18 +1234,23 @@ public class PSG1PlayPanelController : MonoBehaviour
 
         if (toyCoreButtonFontAsset != null)
             label.font = toyCoreButtonFontAsset;
-        if (toyCoreButtonMaterialPreset != null)
-            label.fontSharedMaterial = toyCoreButtonMaterialPreset;
 
-        label.fontStyle = FontStyles.Bold;
+        Material styleMaterial = toyCoreAccentButtonMaterialPreset;
+        if (style == ButtonTextStyle.LightButton && toyCoreLightButtonMaterialPreset != null)
+            styleMaterial = toyCoreLightButtonMaterialPreset;
+        else if (style == ButtonTextStyle.LaunchHeavy && toyCoreLaunchButtonMaterialPreset != null)
+            styleMaterial = toyCoreLaunchButtonMaterialPreset;
+        else if (style == ButtonTextStyle.CounterDark && toyCoreCounterMaterialPreset != null)
+            styleMaterial = toyCoreCounterMaterialPreset;
+
+        if (styleMaterial != null)
+            label.fontSharedMaterial = styleMaterial;
+
+        label.fontStyle = FontStyles.Normal;
         label.enableWordWrapping = false;
         label.color = Color.white;
-        label.enableVertexGradient = true;
-        label.colorGradient = new VertexGradient(
-            new Color32(255, 255, 255, 255),
-            new Color32(255, 255, 255, 255),
-            new Color32(229, 233, 240, 255),
-            new Color32(229, 233, 240, 255));
+        label.enableVertexGradient = false;
+        label.characterSpacing = style == ButtonTextStyle.LightButton ? 2.2f : 0f;
 
         if (autoSize)
         {
@@ -1207,12 +1258,26 @@ public class PSG1PlayPanelController : MonoBehaviour
             label.fontSizeMin = autoSizeMin;
             label.fontSizeMax = autoSizeMax;
         }
+        else
+        {
+            label.enableAutoSizing = false;
+        }
+    }
+
+    void ApplyStyleToButtonLabel(Button button, ButtonTextStyle style, float fontSize)
+    {
+        if (button == null) return;
+        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+        if (label == null) return;
+        label.fontSize = fontSize;
+        ApplyToyCoreButtonTextStyle(label, style);
     }
 
     void LoadSprites()
     {
         currencyBallSprite = LoadSprite("currency_ball");
         panelBackgroundSprite = LoadSprite("panel_background");
+        bkgBackgroundSprite = LoadSprite("bkg");
         plethBackgroundSprite = LoadSprite("pleth_background");
         if (plethBackgroundSprite == null)
             plethBackgroundSprite = panelBackgroundSprite;
@@ -1228,12 +1293,16 @@ public class PSG1PlayPanelController : MonoBehaviour
             launchButtonCleanSprite = launchSprite;
         dailyDropBadgeSprite = LoadSprite("daily_drop_badge");
 
-        crateRustySprite = LoadSprite("crate_rusty");
-        crateBrassSprite = LoadSprite("crate_brass");
+        Sprite basicCapsuleSprite = LoadSprite("basic_capsule");
+        Sprite eliteCapsuleSprite = LoadSprite("elite_capsule");
+        crateRustySprite = basicCapsuleSprite != null ? basicCapsuleSprite : LoadSprite("crate_rusty");
+        crateBrassSprite = eliteCapsuleSprite != null ? eliteCapsuleSprite : LoadSprite("crate_brass");
         crateGoldenSprite = LoadSprite("crate_golden");
         orangeButtonSprite = LoadSprite("orange_btn");
+        clearOrangeButtonSprite = LoadSprite("clear_orange_btn");
         blueButtonSprite = LoadSprite("blue_btn");
         whiteButtonSprite = LoadSprite("white_btn");
+        walletButtonSprite = LoadSprite("wallet");
         Sprite defaultCrate = LoadSprite("icon_crate") ?? LoadSprite("icon_noitem");
         if (crateRustySprite == null) crateRustySprite = defaultCrate;
         if (crateBrassSprite == null) crateBrassSprite = defaultCrate;
@@ -1251,12 +1320,17 @@ public class PSG1PlayPanelController : MonoBehaviour
         switch (crateIndex)
         {
             case 0:
-                return "Basic Box - 3 Balls";
+                return "Basic Capsule - 3 Balls";
             case 1:
-                return "Pro Box - 7 Balls";
+                return "Elite Capsule - 7 Balls";
             default:
-                return "Box";
+                return "Capsule";
         }
+    }
+
+    string GetBuyButtonLabel(int crateIndex)
+    {
+        return $"Buy {GetCratePrice(crateIndex)} balls";
     }
 
     void BuildCratePerkRows(RectTransform parent, int crateIndex)
@@ -1273,7 +1347,7 @@ public class PSG1PlayPanelController : MonoBehaviour
             case 1:
                 AddPerkInfoRow(parent, "icon_extraball", "Extra Ball: summon another ball.");
                 AddPerkInfoRow(parent, "icon_angelwings", "Angel Wings: prevent one fall.");
-                AddPerkInfoRow(parent, "icon_healthbonus", "Elite Health: better life roll.");
+                AddPerkInfoRow(parent, "icon_elitehealth", "Elite Health: better life roll.");
                 break;
         }
     }
