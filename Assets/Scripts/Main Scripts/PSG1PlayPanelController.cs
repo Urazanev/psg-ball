@@ -14,6 +14,8 @@ public class PSG1PlayPanelController : MonoBehaviour
     const int ShopCrateCount = 2;
     const int InventorySlotCount = 3;
     const float SlotSelectedScale = 1.1f;
+    const float ShopCrateSelectedScale = 1.06f;
+    const float MainMenuFocusScale = 1.06f;
     const float SlotScaleLerpSpeed = 12f;
     const float PurchaseExtractDuration = 0.14f;
     const float PurchaseTransitDuration = 0.28f;
@@ -23,6 +25,10 @@ public class PSG1PlayPanelController : MonoBehaviour
     const float MainBackgroundLightenAlpha = 0.12f;
     const float ShopBackgroundLightenAlpha = 0.08f;
     const int ShopMainMenuFocusIndex = ShopCrateCount;
+    const int MainMenuFocusDailyClaim = 0;
+    const int MainMenuFocusShop = 1;
+    const int MainMenuFocusLaunch = 2;
+    const int MainMenuFocusWallet = 3;
 
     enum ButtonTextStyle
     {
@@ -100,6 +106,7 @@ public class PSG1PlayPanelController : MonoBehaviour
     bool toyCoreIconsApplied;
     int selectedCrate;
     int selectedShopFocus;
+    int selectedMainMenuFocus;
     readonly Color disabledIconColor = new Color(1f, 1f, 1f, 0.35f);
     readonly Color queueFullColor = new Color(0.98f, 0.8f, 0.24f, 1f);
     readonly Color queueFullFrameColor = new Color(0.23f, 0.2f, 0.12f, 0.55f);
@@ -130,6 +137,7 @@ public class PSG1PlayPanelController : MonoBehaviour
 
         HandleMenuInput();
         AnimateSelectedCrate();
+        AnimateMainMenuFocus();
         RefreshShopRow();
         RefreshInventoryRow();
         RefreshWalletAndDailyState();
@@ -170,6 +178,7 @@ public class PSG1PlayPanelController : MonoBehaviour
         SanitizeInventorySlots();
         selectedCrate = 0;
         selectedShopFocus = 0;
+        selectedMainMenuFocus = MainMenuFocusLaunch;
         SetShopPanelVisible(false);
         if (launchButtonRoot != null) launchButtonRoot.SetActive(true);
         if (utilityButtonsRoot != null) utilityButtonsRoot.SetActive(true);
@@ -638,14 +647,21 @@ public class PSG1PlayPanelController : MonoBehaviour
 
         if (InputAdapter.MenuDailyDropPressedThisFrame() && !IsShopPanelVisible())
         {
+            selectedMainMenuFocus = MainMenuFocusShop;
             OnShopTriggerPressed();
             return;
         }
 
         if (!IsShopPanelVisible())
         {
+            if (InputAdapter.MenuUpPressedThisFrame())
+                selectedMainMenuFocus = Mathf.Min(MainMenuFocusWallet, selectedMainMenuFocus + 1);
+
+            if (InputAdapter.MenuDownPressedThisFrame())
+                selectedMainMenuFocus = Mathf.Max(MainMenuFocusDailyClaim, selectedMainMenuFocus - 1);
+
             if (InputAdapter.MenuSubmitPressedThisFrame())
-                OnLaunchPressed();
+                ActivateMainMenuElement();
             return;
         }
 
@@ -686,10 +702,12 @@ public class PSG1PlayPanelController : MonoBehaviour
             return;
         }
 
+        bool topRowFocused = selectedShopFocus < ShopCrateCount;
         for (int i = 0; i < shopCrateRects.Length; i++)
         {
             if (shopCrateRects[i] == null) continue;
-            float target = 1f;
+            bool isSelectedCrate = topRowFocused && i == selectedCrate;
+            float target = isSelectedCrate ? ShopCrateSelectedScale : 1f;
             Vector3 targetScale = new Vector3(target, target, 1f);
             shopCrateRects[i].localScale = Vector3.Lerp(shopCrateRects[i].localScale, targetScale, Time.unscaledDeltaTime * SlotScaleLerpSpeed);
 
@@ -705,6 +723,52 @@ public class PSG1PlayPanelController : MonoBehaviour
             Vector3 targetScale = new Vector3(target, target, 1f);
             shopCloseButtonRect.localScale = Vector3.Lerp(shopCloseButtonRect.localScale, targetScale, Time.unscaledDeltaTime * SlotScaleLerpSpeed);
         }
+    }
+
+    void AnimateMainMenuFocus()
+    {
+        bool showMainMenuFocus = !IsShopPanelVisible();
+        float dailyTarget = showMainMenuFocus && selectedMainMenuFocus == MainMenuFocusDailyClaim ? MainMenuFocusScale : 1f;
+        float shopTarget = showMainMenuFocus && selectedMainMenuFocus == MainMenuFocusShop ? MainMenuFocusScale : 1f;
+        float launchTarget = showMainMenuFocus && selectedMainMenuFocus == MainMenuFocusLaunch ? MainMenuFocusScale : 1f;
+        float walletTarget = showMainMenuFocus && selectedMainMenuFocus == MainMenuFocusWallet ? MainMenuFocusScale : 1f;
+
+        LerpButtonScale(dailyClaimButton, dailyTarget);
+        LerpButtonScale(dailyDropButton, shopTarget);
+        LerpButtonScale(launchButton, launchTarget);
+        LerpButtonScale(walletButton, walletTarget);
+    }
+
+    void ActivateMainMenuElement()
+    {
+        switch (selectedMainMenuFocus)
+        {
+            case MainMenuFocusDailyClaim:
+                OnDailyClaimPressed();
+                break;
+            case MainMenuFocusShop:
+                OnShopTriggerPressed();
+                break;
+            case MainMenuFocusLaunch:
+                OnLaunchPressed();
+                break;
+            case MainMenuFocusWallet:
+                OnWalletPressed();
+                break;
+            default:
+                OnLaunchPressed();
+                break;
+        }
+    }
+
+    static void LerpButtonScale(Button button, float targetScale)
+    {
+        if (button == null) return;
+        RectTransform rect = button.transform as RectTransform;
+        if (rect == null) return;
+
+        Vector3 target = new Vector3(targetScale, targetScale, 1f);
+        rect.localScale = Vector3.Lerp(rect.localScale, target, Time.unscaledDeltaTime * SlotScaleLerpSpeed);
     }
 
     void OnShopCratePressed(int crateIndex)
@@ -1011,6 +1075,8 @@ public class PSG1PlayPanelController : MonoBehaviour
         shopPanel.gameObject.SetActive(visible);
         if (visible)
             selectedShopFocus = Mathf.Clamp(selectedCrate, 0, ShopCrateCount - 1);
+        else
+            selectedMainMenuFocus = MainMenuFocusShop;
 
         if (launchButtonRoot != null)
             launchButtonRoot.SetActive(!visible);

@@ -106,6 +106,7 @@ public class PlayerGUI : MonoBehaviour
     GameObject cachedAchievementToast;
     GameObject cachedAchievementGui;
     TMP_FontAsset hudFontAsset;
+    TMP_Text perkActivationHintText;
 
     float deltaTime = 0, refreshRate = 0;
 
@@ -159,6 +160,7 @@ public class PlayerGUI : MonoBehaviour
     void LateUpdate()
     {
         AlignInventoryRowToPerkSlots();
+        UpdatePerkActivationVisuals();
         if (!DisableLegacyPopups) return;
         ForceHidePopupObjects();
     }
@@ -582,6 +584,8 @@ public class PlayerGUI : MonoBehaviour
 
         HideLegacyTicketRow(PlayPanel.transform);
         EnsureHudTypography();
+        ApplyGameplayTextShadows(canvasRoot);
+        UpdatePerkActivationVisuals();
     }
 
     bool SyncTicketCounterFromMenu(RectTransform canvasRoot)
@@ -646,33 +650,45 @@ public class PlayerGUI : MonoBehaviour
         if (canvasRoot != null)
         {
             TMP_Text ballsLabel = (canvasRoot.Find("Balls") as RectTransform)?.GetComponent<TMP_Text>();
-            ApplyTextColor(ballsLabel, new Color(0.2f, 0.2f, 0.2f, 1f));
+            if (ballsLabel != null)
+            {
+                ballsLabel.text = "LIVES";
+                ballsLabel.fontSize = 18f;
+                ballsLabel.fontStyle = FontStyles.Bold;
+                ballsLabel.characterSpacing = 1.6f;
+                ApplyTextColor(ballsLabel, new Color(0.2f, 0.2f, 0.2f, 1f));
+                if (hudFontAsset != null)
+                    ApplyHudFont(ballsLabel, hudFontAsset);
+            }
         }
     }
 
     void ApplyRightHudPadding(RectTransform canvasRoot)
     {
-        const float rightMargin = 56f;
-
         if (Score != null)
-            SetRightMargin(Score.rectTransform, rightMargin);
+        {
+            SetTopRightRect(Score.rectTransform, 52f, 26f, 340f, 84f);
+            Score.alignment = TextAlignmentOptions.TopRight;
+        }
         if (Multiplier != null)
-            SetRightMargin(Multiplier.rectTransform, rightMargin);
+        {
+            SetTopRightRect(Multiplier.rectTransform, 52f, 106f, 340f, 40f);
+            Multiplier.alignment = TextAlignmentOptions.TopRight;
+        }
         if (Lives != null)
         {
-            RectTransform livesRect = Lives.rectTransform;
-            livesRect.anchorMin = new Vector2(1f, 0f);
-            livesRect.anchorMax = new Vector2(1f, 0f);
-            livesRect.pivot = new Vector2(1f, 0f);
-            livesRect.anchoredPosition = new Vector2(-36f, 16f);
-            livesRect.sizeDelta = new Vector2(120f, 24f);
+            SetTopRightRect(Lives.rectTransform, 52f, 144f, 86f, 38f);
+            Lives.alignment = TextAlignmentOptions.MidlineRight;
         }
 
         if (canvasRoot != null)
         {
             TMP_Text ballsLabel = (canvasRoot.Find("Balls") as RectTransform)?.GetComponent<TMP_Text>();
             if (ballsLabel != null && ballsLabel != Lives)
-                SetRightMargin(ballsLabel.rectTransform, rightMargin);
+            {
+                SetTopRightRect(ballsLabel.rectTransform, 142f, 148f, 140f, 30f);
+                ballsLabel.alignment = TextAlignmentOptions.MidlineRight;
+            }
         }
     }
 
@@ -858,6 +874,17 @@ public class PlayerGUI : MonoBehaviour
         rect.sizeDelta = new Vector2(width, height);
     }
 
+    static void SetTopRightRect(RectTransform rect, float right, float top, float width, float height)
+    {
+        if (rect == null) return;
+
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-right, -top);
+        rect.sizeDelta = new Vector2(width, height);
+    }
+
     static void ApplyTextColor(TMP_Text text, Color color)
     {
         if (text == null) return;
@@ -933,10 +960,10 @@ public class PlayerGUI : MonoBehaviour
             targetInventoryRoot.gameObject.SetActive(true);
 
         // Match the gameplay inventory icon size to the menu inventory row (150x150 per slot).
-        SetAnchorsXY(targetInventoryRoot, 0.469f, 0.469f, 0.80f, 0.80f);
+        SetAnchorsXY(targetInventoryRoot, 0.5f, 0.5f, 0.9f, 0.9f);
         targetInventoryRoot.pivot = new Vector2(0.5f, 0.5f);
         targetInventoryRoot.anchoredPosition = Vector2.zero;
-        targetInventoryRoot.sizeDelta = new Vector2(560f, 120f);
+        targetInventoryRoot.sizeDelta = new Vector2(560f, 132f);
         ApplyGameplayInventorySlotSizes(targetInventoryRoot);
         targetInventoryRoot.SetAsLastSibling();
     }
@@ -1024,7 +1051,7 @@ public class PlayerGUI : MonoBehaviour
         slot.anchorMin = new Vector2(0.5f, 0.5f);
         slot.anchorMax = new Vector2(0.5f, 0.5f);
         slot.pivot = new Vector2(0.5f, 0.5f);
-        slot.anchoredPosition = new Vector2(posX, 34f);
+        slot.anchoredPosition = new Vector2(posX, 20f);
         slot.sizeDelta = new Vector2(150f, 150f);
 
         if (slot.childCount <= 0) return;
@@ -1058,16 +1085,212 @@ public class PlayerGUI : MonoBehaviour
         Score.fontStyle = FontStyles.Bold;
         Score.characterSpacing = 3.2f;
         Score.color = new Color(0.1f, 0.1f, 0.1f, 1f);
+        Score.alignment = TextAlignmentOptions.TopRight;
 
-        Multiplier.fontSize = 52f;
+        Multiplier.fontSize = 35f;
         Multiplier.fontStyle = FontStyles.Bold;
-        Multiplier.characterSpacing = 4.5f;
+        Multiplier.characterSpacing = 2.4f;
         Multiplier.color = new Color(1f, 0.55f, 0.16f, 1f);
+        Multiplier.alignment = TextAlignmentOptions.TopRight;
 
-        Lives.fontSize = 20f;
+        Lives.fontSize = 40f;
         Lives.fontStyle = FontStyles.Bold;
-        Lives.characterSpacing = 2f;
+        Lives.characterSpacing = 1.8f;
         Lives.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        Lives.alignment = TextAlignmentOptions.MidlineRight;
+    }
+
+    void ApplyGameplayTextShadows(RectTransform canvasRoot)
+    {
+        ApplyTextShadow(Score);
+        ApplyTextShadow(Multiplier);
+        ApplyTextShadow(Lives);
+        ApplyTextShadow(Tickets);
+
+        if (canvasRoot != null)
+        {
+            TMP_Text ballsLabel = (canvasRoot.Find("Balls") as RectTransform)?.GetComponent<TMP_Text>();
+            ApplyTextShadow(ballsLabel);
+        }
+
+        ApplyTextShadow(perkActivationHintText);
+    }
+
+    static void ApplyTextShadow(TMP_Text text)
+    {
+        if (text == null) return;
+
+        Shadow shadow = text.GetComponent<Shadow>();
+        if (shadow == null)
+            shadow = text.gameObject.AddComponent<Shadow>();
+
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.28f);
+        shadow.effectDistance = new Vector2(1.6f, -1.6f);
+        shadow.useGraphicAlpha = true;
+    }
+
+    void UpdatePerkActivationVisuals()
+    {
+        if (PlayPanel == null) return;
+        RectTransform canvasRoot = PlayPanel.transform.parent as RectTransform;
+        if (canvasRoot == null) return;
+
+        RectTransform gameplayInventoryRoot = FindGameplayInventoryRoot(canvasRoot);
+        RectTransform menuInventoryRoot = canvasRoot.Find("Inventory") as RectTransform;
+        RectTransform inventoryRoot = gameplayInventoryRoot != null ? gameplayInventoryRoot : menuInventoryRoot;
+        if (inventoryRoot == null)
+        {
+            SetPerkActivationHintVisible(false);
+            return;
+        }
+
+        bool gameplayVisible = !PlayPanel.activeInHierarchy && (GameOverPanel == null || !GameOverPanel.activeInHierarchy);
+        if (!gameplayVisible)
+        {
+            SetPerkActivationHintVisible(false);
+            ApplyPerkSlotPulse(inventoryRoot, -1, 0f);
+            return;
+        }
+
+        EnsurePerkActivationHint(inventoryRoot);
+        SetPerkActivationHintVisible(true);
+
+        int activePerkIndex = GetActivePerkQueueIndex();
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.8f);
+        UpdatePerkActivationHintText(activePerkIndex, pulse);
+        ApplyPerkSlotPulse(inventoryRoot, activePerkIndex, pulse);
+    }
+
+    void EnsurePerkActivationHint(RectTransform inventoryRoot)
+    {
+        if (inventoryRoot == null) return;
+
+        if (perkActivationHintText == null || perkActivationHintText.transform.parent != inventoryRoot)
+        {
+            Transform existing = inventoryRoot.Find("PerkActivateHint");
+            if (existing is RectTransform existingRect)
+                perkActivationHintText = existingRect.GetComponent<TMP_Text>();
+            else
+            {
+                GameObject hintGo = new GameObject("PerkActivateHint", typeof(RectTransform));
+                hintGo.transform.SetParent(inventoryRoot, false);
+                perkActivationHintText = hintGo.AddComponent<TextMeshProUGUI>();
+            }
+        }
+
+        if (perkActivationHintText == null) return;
+
+        RectTransform hintRect = perkActivationHintText.rectTransform;
+        hintRect.anchorMin = new Vector2(0.5f, 0f);
+        hintRect.anchorMax = new Vector2(0.5f, 0f);
+        hintRect.pivot = new Vector2(0.5f, 1f);
+        hintRect.anchoredPosition = new Vector2(0f, -8f);
+        hintRect.sizeDelta = new Vector2(620f, 36f);
+
+        if (hudFontAsset != null)
+            ApplyHudFont(perkActivationHintText, hudFontAsset);
+        perkActivationHintText.fontSize = 23f;
+        perkActivationHintText.fontStyle = FontStyles.Bold;
+        perkActivationHintText.alignment = TextAlignmentOptions.Center;
+        perkActivationHintText.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+        perkActivationHintText.raycastTarget = false;
+        ApplyTextShadow(perkActivationHintText);
+    }
+
+    void SetPerkActivationHintVisible(bool isVisible)
+    {
+        if (perkActivationHintText == null) return;
+        GameObject hintObject = perkActivationHintText.gameObject;
+        if (hintObject.activeSelf != isVisible)
+            hintObject.SetActive(isVisible);
+    }
+
+    void UpdatePerkActivationHintText(int activePerkIndex, float pulse)
+    {
+        if (perkActivationHintText == null) return;
+
+        if (activePerkIndex >= 0)
+        {
+            Color activePressColor = Color.Lerp(
+                new Color(0.34f, 0.34f, 0.34f, 1f),
+                new Color(1f, 0.56f, 0.16f, 1f),
+                0.4f + 0.6f * pulse);
+            string pressHex = ColorUtility.ToHtmlStringRGB(activePressColor);
+            perkActivationHintText.text = $"<color=#{pressHex}>PRESS [X]</color> TO ACTIVATE";
+        }
+        else
+        {
+            perkActivationHintText.text = "<color=#555555>PRESS [X]</color> TO ACTIVATE";
+        }
+    }
+
+    void ApplyPerkSlotPulse(RectTransform inventoryRoot, int activePerkIndex, float pulse)
+    {
+        if (inventoryRoot == null) return;
+
+        RectTransform first = FindSlotRect(inventoryRoot, "Main", "First");
+        RectTransform second = FindSlotRect(inventoryRoot, "Second");
+        RectTransform third = FindSlotRect(inventoryRoot, "Third");
+        RectTransform[] slots = { first, second, third };
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            RectTransform slot = slots[i];
+            if (slot == null) continue;
+
+            bool hasPerk = HasPerkInSlot(i);
+            bool isActive = hasPerk && i == activePerkIndex;
+            Image frame = slot.GetComponent<Image>();
+            if (frame != null)
+            {
+                if (isActive)
+                {
+                    frame.color = Color.Lerp(
+                        new Color(0.86f, 0.5f, 0.18f, 0.22f),
+                        new Color(1f, 0.64f, 0.2f, 0.62f),
+                        pulse);
+                }
+                else if (hasPerk)
+                {
+                    frame.color = new Color(0.2f, 0.2f, 0.2f, 0.24f);
+                }
+                else
+                {
+                    frame.color = new Color(0.2f, 0.2f, 0.2f, 0.08f);
+                }
+            }
+
+            Image icon = slot.childCount > 0 ? slot.GetChild(0).GetComponent<Image>() : null;
+            if (icon != null && icon.enabled)
+            {
+                if (isActive)
+                    icon.color = Color.Lerp(new Color(0.82f, 0.82f, 0.82f, 1f), Color.white, pulse);
+                else if (hasPerk)
+                    icon.color = new Color(0.93f, 0.93f, 0.93f, 1f);
+            }
+        }
+    }
+
+    static bool HasPerkInSlot(int index)
+    {
+        if (Inventory.Slots == null) return false;
+        if (index < 0 || index >= Inventory.Slots.Length) return false;
+
+        Item item = Inventory.Slots[index];
+        return item != null && !(item is NoItem);
+    }
+
+    static int GetActivePerkQueueIndex()
+    {
+        if (Inventory.Slots == null) return -1;
+
+        for (int i = 0; i < Inventory.Slots.Length; i++)
+        {
+            if (HasPerkInSlot(i))
+                return i;
+        }
+
+        return -1;
     }
 
     static void ApplyHudFont(TMP_Text text, TMP_FontAsset fontAsset)

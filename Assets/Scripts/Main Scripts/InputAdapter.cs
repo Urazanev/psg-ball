@@ -143,7 +143,10 @@ public static class InputAdapter
         ReadPressedThisFrame(nudgeRight, () => Input.GetKeyDown(KeyCode.RightShift));
 
     public static bool UseItemPressedThisFrame() =>
-        ReadPressedThisFrame(useItem, () => Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.LeftApple));
+        ReadPressedThisFrame(useItem, () =>
+            Input.GetKeyDown(KeyCode.X) ||
+            Input.GetKeyDown(KeyCode.LeftControl) ||
+            Input.GetKeyDown(KeyCode.LeftApple));
 
     public static bool MenuLeftPressedThisFrame() =>
         ReadPressedThisFrame(menuLeft ?? nudgeLeft, () => Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A));

@@ -43,8 +43,8 @@ public class PerkSlots3DOverlay : MonoBehaviour
     [SerializeField] bool disableLegacyRaycast = false;
     [SerializeField] bool showOnlyDuringGameplay = true;
     [Header("Emergency Profile")]
-    [SerializeField] bool enforceLowBackWallAtRuntime = true;
-    [SerializeField] bool enforceTightCameraAtRuntime = true;
+    [SerializeField] bool enforceLowBackWallAtRuntime = false;
+    [SerializeField] bool enforceTightCameraAtRuntime = false;
     [SerializeField] Vector3 runtimeCameraLocalPosition = new Vector3(-6.45f, 13.55f, -8.2f);
     [SerializeField] Vector3 runtimeCameraLocalEuler = new Vector3(45f, 0f, 0f);
     [Header("Backboard Mount")]

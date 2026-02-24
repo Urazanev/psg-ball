@@ -8596,6 +8596,7 @@ MonoBehaviour:
   Reset: {fileID: 930063703}
   DeleteProgress: {fileID: 1410720932}
   ShowDangerButtons: 0
+  DisableLegacyPopups: 1
   PlayPanel: {fileID: 625063828}
   GameOverPanel: {fileID: 1133153272}
   GameOverLabel: {fileID: 608372514}
@@ -13761,7 +13762,7 @@ MonoBehaviour:
   surfaceRaycastDistance: 80
   surfaceLayerMask:
     serializedVersion: 2
-    m_Bits: -1
+    m_Bits: 4294967295
   surfaceOffset: 0.012
   alignSlotsToSurfaceNormal: 0
   useAutoLayout: 1
@@ -13774,8 +13775,25 @@ MonoBehaviour:
   - {x: 0.565, y: 0.815}
   hideLegacySquares: 1
   disableLegacyRaycast: 0
+  showOnlyDuringGameplay: 1
+  enforceLowBackWallAtRuntime: 0
+  enforceTightCameraAtRuntime: 0
+  runtimeCameraLocalPosition: {x: -6.45, y: 13.55, z: -8.2}
+  runtimeCameraLocalEuler: {x: 45, y: 0, z: 0}
+  mountSlotsToBackboard: 0
+  hideBackboardForExperiment: 0
+  backboardRootName: Arena Static
+  backboardNameContains: Outer Edge
+  backboardSurfaceOffset: 0.02
+  backboardHorizontalOffset: 0
+  backboardVerticalOffset: 0
+  backboardGapFactor: 0.22
   applyRuntimeCornerRounding: 1
   runtimeOuterCornerRadius: 0.008
+  renderPerkIcons: 1
+  perkIconFill: 0.7
+  perkIconDepthBias: 0.014
+  perkIconSortingOrder: 25
 --- !u!4 &1169962285 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6153374466952637488, guid: 01ac61776fddf014686ec4b86c2b9244, type: 3}
@@ -15099,8 +15117,8 @@ Transform:
   m_GameObject: {fileID: 1263901473}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.4494, y: -6.5735, z: 7.984}
-  m_LocalScale: {x: 0.5358996, y: 1, z: 12.878967}
+  m_LocalPosition: {x: 5.4494, y: -6.5735, z: 8.05}
+  m_LocalScale: {x: 0.5358996, y: 1, z: 13}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5140759}
@@ -18853,8 +18871,8 @@ Transform:
   m_GameObject: {fileID: 1643792752}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.6189, y: -6.6, z: 14.3}
-  m_LocalScale: {x: 0.1571, y: 1, z: 10.195885}
+  m_LocalPosition: {x: 0.6189, y: -6.6, z: 15}
+  m_LocalScale: {x: 1, y: 1, z: 10.195885}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5140759}
@@ -21818,6 +21836,7 @@ MonoBehaviour:
   ThirdItem:
   - {fileID: 1630128818}
   - {fileID: 739654177}
+  VerbosePerkLogs: 0
 --- !u!1 &1821709222
 GameObject:
   m_ObjectHideFlags: 0
@@ -22200,8 +22219,8 @@ Transform:
   m_GameObject: {fileID: 1842699567}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.4, y: -6.63, z: 7.984}
-  m_LocalScale: {x: 0.1571, y: 1, z: 12.878967}
+  m_LocalPosition: {x: -4.4, y: -6.63, z: 8.05}
+  m_LocalScale: {x: 0.1571, y: 1, z: 13}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5140759}
